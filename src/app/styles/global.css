@@ -1,0 +1,56 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 280px;
+  background: var(--color-bg);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(39, 117, 111, 0.08), transparent 32rem),
+    var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid rgba(39, 117, 111, 0.28);
+  outline-offset: 3px;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.eyebrow,
+.section-label {
+  margin-bottom: 10px;
+  color: var(--color-neutral-600);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}

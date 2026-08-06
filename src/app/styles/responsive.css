@@ -1,0 +1,140 @@
+@media (max-width: 900px) {
+  .totals-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .app-header {
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    align-items: flex-end;
+    flex-direction: column;
+  }
+
+  .day-navigation {
+    grid-template-columns: repeat(7, 54px);
+    padding-bottom: 6px;
+  }
+
+  .schedule-row {
+    min-height: clamp(54px, calc(var(--row-minutes) * 0.42px), 150px);
+    grid-template-columns: 70px 5px minmax(0, 1fr);
+  }
+
+  .schedule-time {
+    padding-left: 12px;
+    padding-right: 8px;
+  }
+
+  .schedule-content {
+    padding-right: 13px;
+  }
+}
+
+@media (max-width: 520px) {
+  .login-page {
+    align-items: start;
+    padding: 12px;
+  }
+
+  .login-card {
+    margin-top: 6vh;
+    border-radius: 22px;
+  }
+
+  .app-header {
+    display: grid;
+  }
+
+  .header-actions {
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
+  }
+
+  .current-date {
+    text-align: left;
+  }
+
+  .view-toolbar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .toolbar-button:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .choice-list {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .choice-button {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .totals-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .schedule-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-inline: 16px;
+  }
+
+  .schedule-header span {
+    text-align: left;
+  }
+
+  .schedule-title-line {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 360px) {
+  .app-shell {
+    padding-inline: 8px;
+  }
+
+  .view-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar-button:first-child {
+    grid-column: auto;
+  }
+
+  .schedule-row {
+    grid-template-columns: 62px 4px minmax(0, 1fr);
+  }
+
+  .schedule-time {
+    padding-left: 8px;
+  }
+
+  .schedule-time strong {
+    font-size: 0.78rem;
+  }
+
+  .schedule-time span {
+    font-size: 0.58rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
