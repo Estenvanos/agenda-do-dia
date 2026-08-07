@@ -10,283 +10,262 @@ import type {
   StudyPhase,
   StudyPhaseDefinition,
   StudyTheme,
+  StudyTopic,
 } from '../model/types';
 
-/**
- * Arquivo central de conteúdo da agenda.
- * Para alterar horários, títulos ou descrições, edite somente este módulo.
- */
 export const CATEGORY_DEFINITIONS: Record<CategoryId, CategoryDefinition> = {
-  saas:     {color:'var(--color-accent)',      name:'SaaS'},
-  estudo:   {color:'var(--color-accent-2)',    name:'Estudo'},
-  trabalho: {color:'#6a7a8c',                  name:'Trabalho'},
-  treino:   {color:'#b06a52',                  name:'Treino'},
-  pessoal:  {color:'#97627e',                  name:'Pessoal'},
-  descanso: {color:'var(--color-neutral-400)', name:'Descanso'},
-  sono:     {color:'var(--color-neutral-700)', name:'Sono'},
-  rotina:   {color:'var(--color-neutral-500)', name:'Rotina'}
+  projeto: { color: 'var(--color-accent)', name: 'Projeto' },
+  estudo: { color: 'var(--color-accent-2)', name: 'Estudo' },
+  trabalho: { color: '#6a7a8c', name: 'Trabalho' },
+  treino: { color: '#b06a52', name: 'Treino' },
+  pessoal: { color: '#97627e', name: 'Pessoal' },
+  descanso: { color: 'var(--color-neutral-400)', name: 'Descanso' },
+  sono: { color: 'var(--color-neutral-700)', name: 'Sono' },
+  rotina: { color: 'var(--color-neutral-500)', name: 'Rotina' },
 };
 
+const block = (
+  start: string,
+  end: string,
+  title: string,
+  detail: string,
+  category: CategoryId,
+  tag: ScheduleTag = null,
+  slot: ScheduleSlot = null,
+): ScheduleBlock => ({ start, end, title, detail, category, tag, slot });
 
-const block = (start: string, end: string, title: string, detail: string, category: CategoryId, tag: ScheduleTag = null, slot: ScheduleSlot = null): ScheduleBlock => ({ start, end, title, detail, category, tag, slot });
-
-export const THEME_BY_DAY: Partial<Record<DayId, StudyTheme>> = { seg:'sd', ter:'backA', qua:'backB', sex:'ia' };
-
+export const THEME_BY_DAY: Partial<Record<DayId, StudyTheme>> = {
+  seg: 'seg', ter: 'ter', qua: 'qua', qui: 'qui', sex: 'sex',
+};
 
 export const STUDY_TRACK: Record<StudyPhase, StudyPhaseDefinition> = {
-  f1:{
-    note:'Fundamentos. Nada aqui é avançado, e é exatamente por isso que funciona: system design sem entender event loop e índice é decoreba de diagrama. Oito semanas. Ao final, você deve conseguir explicar o que acontece entre o clique e a resposta no ResuMax, camada por camada.',
-    sd:{t:'System design — o caminho da requisição',
-        d:'Vocabulário base: latência contra throughput, DNS, load balancer, camada de aplicação, cache, banco. Desenhe no papel a arquitetura do ResuMax como ela é hoje e marque com X onde ela quebra com dez mil usuários.'},
-    backA:{t:'Backend — Node por dentro',
-        d:'Event loop, microtask contra macrotask, streams, backpressure, worker threads. Meça em vez de ler: escreva um script que trava o event loop e prove com clinic.js ou node --prof. Sem isso, "Node é assíncrono" continua sendo uma frase decorada.'},
-    backB:{t:'Backend — MongoDB de verdade',
-        d:'Modelagem pelo padrão de acesso, não por entidade. Embedding contra referência, índices compostos e a regra ESR, explain() em cada query que você já escreveu no ResuMax. Anote quantas fazem varredura de coleção inteira.'},
-    ia:{t:'IA aplicada — a API na mão, sem framework',
-        d:'Chamada direta à API de um modelo, streaming da resposta, saída estruturada em JSON, contagem de token e custo por requisição. Entenda o HTTP antes de tocar em LangChain — quase todo problema de IA em produção é problema de engenharia comum.'}
+  f1: {
+    note: 'Fase 1 — Fundação. Redes entra agora porque cloud e DevOps são construídos em cima dela: quem estuda nuvem sem saber o que é sub-rede acaba decorando nome de serviço. Ao fim das oito semanas você explica o que acontece entre o clique e a resposta, camada por camada, do pacote ao índice do banco.',
+    seg: { t: 'System design — o caminho da requisição', d: 'DNS, balanceador, aplicação, cache, banco. Latência contra throughput e cálculo grosseiro de escala. Desenhe no papel o sistema que você mexe no trabalho e marque com X onde ele quebraria com dez vezes o tráfego.' },
+    ter: { t: 'Backend — Node por dentro', d: 'Event loop, microtask contra macrotask, streams, backpressure, worker threads. Meça em vez de ler: trave o event loop de propósito e prove com clinic.js ou node --prof. Sem isso, "Node é assíncrono" continua sendo frase decorada.' },
+    qua: { t: 'Dados — modelagem que aguenta', d: 'No Mongo, modele pelo padrão de acesso e não por entidade. Embedding contra referência, índices compostos, regra ESR, explain() em toda query que você já escreveu. Conte quantas fazem varredura de coleção inteira.' },
+    qui: { t: 'Redes — o que acontece de verdade', d: 'DNS, handshake TCP, TLS, HTTP/1.1 contra HTTP/2 contra HTTP/3, keep-alive, o custo real de um round-trip. Redes é o único tema dessa lista que você consegue observar diretamente: abra a aba de rede do navegador ou o Wireshark e olhe os pacotes. Quase ninguém olha, e é o que torna o resto concreto.' },
+    sex: { t: 'IA — a API na mão, sem framework', d: 'Chamada direta ao modelo, streaming da resposta, saída estruturada em JSON, contagem de token e custo por requisição. Entenda o HTTP antes de tocar em LangChain: quase todo problema de IA em produção é problema de engenharia comum.' },
   },
-  f2:{
-    note:'Escala e confiabilidade. Aqui system design e backend viram a mesma coisa: cada conceito de arquitetura você implementa no ResuMax na mesma semana em que estuda. Se não deu pra implementar, você não entendeu.',
-    sd:{t:'System design — escala e falha',
-        d:'Replicação, sharding, consistência eventual, CAP na prática. Idempotência, rate limiting, retry com backoff exponencial, circuit breaker. Para cada item, responda por escrito: onde isso está faltando no ResuMax hoje e o que acontece quando faltar.'},
-    backA:{t:'Backend — cache e filas',
-        d:'Redis como cache e como lock distribuído, estratégias de invalidação, filas de job com BullMQ pra tirar trabalho lento de dentro do request. Meta mensurável: nenhuma rota da sua API acima de 300ms no p95.'},
-    backB:{t:'Backend — observabilidade e resiliência',
-        d:'Log estruturado, tracing distribuído, métricas p50/p95/p99, health check, graceful shutdown. Teste de integração com container de banco de verdade, não com mock do Mongo — mock esconde justamente os bugs que derrubam produção.'},
-    ia:{t:'IA aplicada — busca semântica no seu próprio stack',
-        d:'Embeddings e Atlas Vector Search, que é exatamente onde JavaScript, MongoDB e IA se encontram sem você trocar de linguagem. Chunking, estratégia de recuperação, e por que um RAG mal feito é pior que nenhum RAG.'}
+  f2: {
+    note: 'Fase 2 — Operação. Aqui você deixa de só escrever código e passa a colocá-lo no ar com segurança e a enxergar o que ele faz depois do deploy. É a fase que mais muda como o mercado te enxerga, porque a maioria dos fullstack para no merge.',
+    seg: { t: 'System design — falha e escala', d: 'Idempotência, rate limiting, retry com backoff, circuit breaker, fila como amortecedor. Replicação, consistência eventual, CAP. Para cada um, escreva uma frase: que problema real resolve e o que custa em troca.' },
+    ter: { t: 'Backend — cache e assincronia', d: 'Redis como cache e como lock distribuído, estratégias de invalidação, filas de job com BullMQ pra tirar trabalho lento de dentro do request. Meta medida, não sentida: nenhuma rota acima de 300ms no p95.' },
+    qua: { t: 'DevOps — do commit até produção', d: 'Dockerfile multi-stage escrito do zero, pipeline de CI que roda teste e bloqueia merge quebrado, e observabilidade: log estruturado, métricas p50/p95/p99, tracing, health check. DevOps não é uma pilha de ferramentas, é encurtar a distância entre commit e produção sem aumentar o risco.' },
+    qui: { t: 'Cloud — infraestrutura de verdade', d: 'Modelos de serviço, e principalmente rede na nuvem: VPC, sub-rede, grupo de segurança, balanceador — é aqui que a fase 1 volta e faz sentido. Infraestrutura como código com Terraform. E leia a fatura: entender custo de nuvem é uma habilidade rara, e cara pra empresa que não tem.' },
+    sex: { t: 'IA — busca semântica no seu stack', d: 'Embeddings, chunking, estratégia de recuperação e busca vetorial no Atlas, que é onde o Mongo que você já usa encontra o assunto sem trocar de linguagem. Entenda por que um RAG mal feito é pior que nenhum RAG.' },
   },
-  f3:{
-    note:'Profundidade. É a fase que vira diferencial em entrevista e em salário, e a que mais gente abandona porque não tem resultado visível rápido. Oito semanas.',
-    sd:{t:'System design — desenhar do zero, em voz alta',
-        d:'Um sistema por semana em 45 minutos, falando: encurtador de URL, feed, upload de arquivo grande, sistema de fila, chat. Comece pelos requisitos e pelo cálculo de escala, termine pelos trade-offs. Grave o áudio e ouça depois — é aí que você descobre onde travou.'},
-    backA:{t:'Backend — o que separa CRUD de produto',
-        d:'Multi-tenancy, autorização granular, migração sem downtime, versionamento de API, transações e garantias ACID no Mongo. São os assuntos que aparecem quando o entrevistador quer saber se você já manteve algo em produção.'},
-    backB:{t:'Backend — performance sob carga',
-        d:'Teste de carga com k6, profiling de memória, connection pooling, N+1 no Mongo, paginação por cursor em vez de skip. Ache o gargalo real do ResuMax, derrube-o e escreva o antes e depois com números.'},
-    ia:{t:'IA aplicada — avaliação e custo',
-        d:'Como saber se sua feature de IA piorou depois de uma mudança: conjunto de teste próprio, avaliação automática, cache de resposta, fallback de modelo e teto de gasto por usuário. É o que quase ninguém faz e o que todo produto com IA precisa.'}
-  }
+  f3: {
+    note: 'Fase 3 — Rigor. Segurança só entra agora porque ela precisa de backend, redes e cloud pra não virar decoreba da lista da OWASP. E o exercício de quinta — desenhar em voz alta e se gravar — é o de maior retorno da trilha inteira: entrevista de arquitetura é falar sob perguntas, não escrever.',
+    seg: { t: 'System design — decidir e registrar', d: 'O trabalho de arquiteto é escolher e justificar, não desenhar bonito. Um ADR por semana sobre uma decisão real do projeto: contexto, opções consideradas, escolha, consequência aceita. Estude também os padrões que você ainda evita — event sourcing, CQRS, saga — pra conhecer o custo de cada um e não só a propaganda.' },
+    ter: { t: 'Backend — o que separa CRUD de produto', d: 'Multi-tenancy, autorização granular, migração sem downtime, versionamento de API, transações e garantias ACID. É o repertório de quem já manteve algo vivo em produção, e é exatamente o que se pergunta de pleno pra sênior.' },
+    qua: { t: 'Segurança — ataque o seu próprio código', d: 'OWASP Top 10 aplicado ao que você escreveu, não em teoria: injeção, autenticação quebrada, controle de acesso falho. Gestão e rotação de segredo, e cadeia de dependência — npm audit é o começo da conversa, não o fim. Tente invadir o seu projeto antes que alguém faça isso por você.' },
+    qui: { t: 'System design aplicado — desenhar em voz alta', d: 'Um sistema por semana em 45 minutos, falando: encurtador de URL, feed, upload de arquivo grande, sistema de fila, chat, notificação em massa. Comece por requisitos e cálculo de escala, termine por trade-offs. Grave o áudio e ouça — é ouvindo que você descobre onde travou e o que decorou sem entender.' },
+    sex: { t: 'IA — fine-tuning e avaliação', d: 'Fine-tuning resolve formato e estilo consistentes; conhecimento novo é RAG, não ajuste fino — confundir os dois é a forma mais cara de errar nessa área. Monte um dataset pequeno, rode um ajuste num modelo aberto e, principalmente, avalie: sem conjunto de avaliação, fine-tuning é fé.' },
+  },
 };
 
+export const WEEKLY_HABITS: Partial<Record<DayId, StudyTopic>> = {
+  seg: { t: 'Hábito — ler código de gente melhor', d: 'Vinte minutos lendo um trecho de projeto aberto no seu stack. Não pra contribuir: pra ver como alguém experiente organiza pasta, nomeia função e trata erro. Ler código ensina mais por hora do que escrever.' },
+  ter: { t: 'Hábito — simplificar o próprio código', d: 'Abra o que você escreveu ontem e deixe mais curto e mais claro. Deletar linha é progresso. Se você não consegue explicar uma função em uma frase, ela faz coisa demais.' },
+  qua: { t: 'Hábito — relato de um erro', d: 'Meia página sobre um bug da semana: sintoma, causa real, como você achou. Vira post, vira resposta de entrevista, vira documentação. É o hábito de maior retorno da lista inteira.' },
+  qui: { t: 'Hábito — rede e carreira', d: 'Uma mensagem pra alguém da área ou pro seu mentor, duas vagas salvas e analisadas, uma seção do LinkedIn reescrita.' },
+  sex: { t: 'Hábito — publicar a semana', d: 'Push, README atualizado e um parágrafo curto no GitHub ou LinkedIn sobre o que você entendeu essa semana. Aprendizado que ninguém vê não conta como portfólio.' },
+};
 
-const manhaSemana: ScheduleBlock[] = [
-  block('07:00','07:15','Acordar, água, luz da janela','Abra a cortina antes de olhar o celular. Mobilidade leve de ombro e quadril, 5 minutos.','rotina'),
-  block('07:15','07:45','Café da manhã','Refeição de verdade, sentado. Proteína + carboidrato.','rotina'),
-  block('07:45','08:15','Banho e se arrumar','Deixe a mochila da academia pronta agora, não à noite.','rotina'),
-  block('08:15','08:50','Revisão espaçada','Cartões do Anki do que a trilha cobriu nos últimos dias, depois explique um conceito em voz alta sem consultar nada. É revisão, não conteúdo novo — todo card sai do bloco da trilha da tarde.','estudo'),
-  block('08:50','09:00','Trabalho','Cinco minutos de trajeto, dez de folga.','rotina')
+export const LEETCODE: StudyTopic = {
+  t: 'LeetCode — um problema por dia',
+  d: 'Trinta minutos: vinte resolvendo, dez escrevendo onde você travou e qual padrão resolveria. O registro do erro vale mais que a solução. Se resolveu de primeira e sem esforço, suba o nível amanhã.',
+};
+
+const weekdayMorning: ScheduleBlock[] = [
+  block('07:00', '07:15', 'Acordar, água, luz da janela', 'Abra a cortina antes de olhar o celular. Mobilidade de ombro e quadril, cinco minutos.', 'rotina'),
+  block('07:15', '07:45', 'Café da manhã', 'Refeição de verdade, sentado.', 'rotina'),
+  block('07:45', '08:10', 'Banho e se arrumar', 'Deixe a mochila da academia pronta agora, não à noite.', 'rotina'),
+  block('08:10', '08:40', 'Revisão espaçada', 'Cartões do que a trilha cobriu nos últimos dias e um conceito explicado em voz alta, sem consultar. Todo card sai de um bloco da trilha ou da leitura — você não cria card de coisa que passou os olhos.', 'estudo'),
+  block('08:40', '08:50', 'Leitura curta', 'Dez minutos numa fonte só sobre novidade de IA ou dev, com timer. Sem timer isso vira quarenta minutos de rolagem e come o bloco de projeto.', 'estudo'),
+  block('08:50', '09:00', 'Trajeto até o trabalho', '', 'rotina'),
 ];
 
-const noiteAcademia = (extraTitle: string, extraDetail: string): ScheduleBlock[] => ([
-  block('18:00','18:05','Saída do trabalho','Cinco minutos até em casa.','rotina'),
-  block('18:05','18:20','Lanche pré-treino e trocar de roupa','Alto em carboidrato, proteína moderada, quase sem gordura e fibra. Banana com whey, ou pão com geleia e iogurte grego.','rotina'),
-  block('18:20','18:40','Trajeto até a academia','Vinte minutos. Se atrasar no trabalho, vá direto de lá com o lanche na mochila.','rotina'),
-  block('18:40','19:50','Academia','Setenta minutos. Anote carga e repetições dos quatro principais na hora, não depois.','treino'),
-  block('19:50','20:10','Volta pra casa','','rotina'),
-  block('20:10','20:45','Jantar e descanso passivo','Não encaixe nada aqui de propósito. Comer e não fazer nada é parte do plano.','descanso'),
-  block('20:45','21:20',extraTitle,extraDetail,'saas','opcional'),
-  block('21:20','22:00','Videogame','Quarenta minutos. Se pulou o bloco anterior, você tem uma hora e quinze.','pessoal'),
-  block('22:00','23:00','Sem tela','Celular longe da cama. Luz baixa. Alongar ou ler no papel.','descanso'),
-  block('23:00','07:00','Dormir','Oito horas. É a variável que mais afeta tudo o que está acima.','sono')
-]);
+const gymEvening: ScheduleBlock[] = [
+  block('18:00', '18:05', 'Saída do trabalho', 'Cinco minutos até em casa.', 'rotina'),
+  block('18:05', '18:20', 'Lanche pré-treino e trocar de roupa', 'Muito carboidrato, proteína moderada, quase nada de gordura e fibra. Banana com whey, ou pão com geleia e iogurte grego.', 'rotina'),
+  block('18:20', '18:40', 'Trajeto até a academia', 'Se atrasar no trabalho, vá direto de lá com o lanche na mochila.', 'rotina'),
+  block('18:40', '19:50', 'Academia', 'Anote carga e repetições dos quatro principais na hora, não depois.', 'treino'),
+  block('19:50', '20:10', 'Volta pra casa', '', 'rotina'),
+  block('20:10', '20:45', 'Jantar e descanso passivo', 'Não encaixe nada aqui, de propósito.', 'descanso'),
+  block('20:45', '21:20', 'Leitura do livro em modo leve', 'Trinta e cinco minutos de livro no papel, sem cobrança de anotação. Ler é a única coisa da trilha que funciona bem com o corpo cansado — codar às 20:45 depois de treinar não funciona.', 'estudo', 'opcional'),
+  block('21:20', '22:00', 'Videogame', 'Se pulou o bloco anterior, você tem uma hora e quinze.', 'pessoal'),
+  block('22:00', '23:00', 'Sem tela', 'Celular longe da cama, luz baixa, alongar ou ler no papel.', 'descanso'),
+  block('23:00', '07:00', 'Dormir', 'Oito horas. É a variável que mais afeta tudo o que está acima.', 'sono'),
+];
 
 const weekdayWorkBlocks: Record<DemandLevel, ScheduleBlock[]> = {
   livre: [
-    block('09:00','09:10','Triagem do dia','Confirme que não há nada pendente e avise quem precisa saber. Dez minutos, sem abrir código.','trabalho'),
-    block('09:10','10:40','SaaS — bloco profundo','Uma feature, não cinco. Celular no modo foco, notificação fechada.','saas'),
-    block('10:40','10:50','Micro-descanso','Levantar, andar, água, olhar pra longe. Sem celular — rolar feed não recupera atenção.','descanso'),
-    block('10:50','12:00','SaaS — segundo bloco','Continue a mesma feature. Trocar de contexto aqui joga fora o aquecimento das duas horas anteriores.','saas'),
-    block('12:00','12:40','Almoço','','rotina'),
-    block('12:40','13:10','Faculdade EAD','Aula gravada ou leitura. Exigência cognitiva baixa combina com o horário.','estudo'),
-    block('13:10','13:30','Descanso sem tela','Caminhada curta. Depois do almoço é a pior janela do dia, não force código aqui.','descanso'),
-    block('13:30','15:00','SaaS — terceiro bloco','Dia livre é quando você paga dívida técnica: teste, deploy, aquele refactor que você vem adiando.','saas'),
-    block('15:00','15:10','Micro-descanso','','descanso'),
-    block('15:10','16:10','Estudo do nicho','','estudo',null,'trilha'),
-    block('16:10','16:20','Micro-descanso','','descanso'),
-    block('16:20','17:20','Trilha — segundo bloco','','estudo',null,'trilha2'),
-    block('17:20','18:00','SaaS — fechamento','Commit, atualizar o README e escrever em três linhas o que fazer amanhã. Mata o custo de lembrar onde parou.','saas')
+    block('09:00', '09:10', 'Triagem do dia', 'Confirme que não há pendência e avise quem precisa saber. Dez minutos, sem abrir código.', 'trabalho'),
+    block('09:10', '10:40', 'Projeto de aprendizado', 'Implemente o que a trilha da semana explicou. O projeto existe pra provar o conceito, não pra virar produto.', 'projeto'),
+    block('10:40', '10:50', 'Micro-descanso', 'Levantar, andar, água, olhar pra longe. Sem celular — rolar feed não recupera atenção.', 'descanso'),
+    block('10:50', '12:00', 'Trilha — primeira parte', '', 'estudo', null, 'trilha'),
+    block('12:00', '12:40', 'Almoço', '', 'rotina'),
+    block('12:40', '13:10', 'Faculdade EAD', 'Aula gravada ou leitura. Exigência baixa combina com o horário.', 'estudo'),
+    block('13:10', '13:30', 'Descanso sem tela', 'Caminhada curta. Depois do almoço é a pior janela do dia.', 'descanso'),
+    block('13:30', '14:40', 'Trilha — segunda parte', '', 'estudo', null, 'trilha2'),
+    block('14:40', '14:50', 'Micro-descanso', '', 'descanso'),
+    block('14:50', '15:20', 'LeetCode', '', 'estudo', null, 'leet'),
+    block('15:20', '16:20', 'Leitura do livro', 'Uma hora no livro da fase, com caneta. Dia livre é quando a leitura longa cabe sem culpa.', 'estudo'),
+    block('16:20', '16:40', 'Hábito da semana', '', 'estudo', null, 'habito'),
+    block('16:40', '17:30', 'Projeto de aprendizado — parte 2', 'Termine deixando algo funcionando, nem que seja pequeno.', 'projeto'),
+    block('17:30', '18:00', 'Fechamento do dia', 'Commit, três linhas do que fazer amanhã e cinco cartões do que estudou hoje.', 'projeto'),
   ],
   medio: [
-    block('09:00','09:15','Triagem do dia','Liste as demandas reais, responda só o urgente. Não abra código ainda.','trabalho'),
-    block('09:15','10:45','SaaS — bloco profundo','Melhor janela cognitiva do dia. Noventa minutos, uma feature só.','saas'),
-    block('10:45','10:55','Micro-descanso','Levantar, andar, água, olhar pra longe. Sem celular.','descanso'),
-    block('10:55','12:00','Demandas do trabalho','','trabalho'),
-    block('12:00','12:40','Almoço','','rotina'),
-    block('12:40','13:10','Faculdade EAD','Aula gravada ou leitura.','estudo'),
-    block('13:10','13:30','Descanso sem tela','Caminhada curta. Pior janela cognitiva do dia.','descanso'),
-    block('13:30','15:00','Demandas do trabalho','','trabalho'),
-    block('15:00','15:10','Micro-descanso','','descanso'),
-    block('15:10','16:10','Estudo do nicho','','estudo',null,'trilha'),
-    block('16:10','16:20','Micro-descanso','','descanso'),
-    block('16:20','17:20','Buffer do trabalho','Sobra do dia e imprevistos. Se não sobrou nada, vira SaaS.','trabalho'),
-    block('17:20','18:00','SaaS — fechamento','Commit, README e três linhas do que fazer amanhã.','saas')
+    block('09:00', '09:15', 'Triagem do dia', 'Liste as demandas reais, responda só o urgente. Não abra código ainda.', 'trabalho'),
+    block('09:15', '10:15', 'Projeto de aprendizado', 'Uma hora na melhor janela do dia implementando o tema da trilha da semana. Notificação fechada.', 'projeto'),
+    block('10:15', '10:25', 'Micro-descanso', 'Levantar, andar, água, olhar pra longe. Sem celular.', 'descanso'),
+    block('10:25', '12:00', 'Demandas do trabalho', '', 'trabalho'),
+    block('12:00', '12:40', 'Almoço', '', 'rotina'),
+    block('12:40', '13:10', 'Faculdade EAD', '', 'estudo'),
+    block('13:10', '13:30', 'Descanso sem tela', 'Caminhada curta. Pior janela cognitiva do dia.', 'descanso'),
+    block('13:30', '15:00', 'Demandas do trabalho', '', 'trabalho'),
+    block('15:00', '15:10', 'Micro-descanso', '', 'descanso'),
+    block('15:10', '16:20', 'Trilha', '', 'estudo', null, 'trilha'),
+    block('16:20', '16:50', 'LeetCode', '', 'estudo', null, 'leet'),
+    block('16:50', '17:10', 'Hábito da semana', '', 'estudo', null, 'habito'),
+    block('17:10', '17:30', 'Buffer do trabalho', 'Sobra do dia e imprevistos. Se não sobrou nada, vira projeto.', 'trabalho'),
+    block('17:30', '18:00', 'Fechamento do dia', 'Commit, três linhas do que fazer amanhã e cinco cartões do que estudou hoje.', 'projeto'),
   ],
   continuo: [
-    block('09:00','09:15','Triagem do dia','Dia pesado: defina agora o que realmente precisa sair hoje e o que pode esperar.','trabalho'),
-    block('09:15','10:15','SaaS — bloco profundo reduzido','Uma hora, protegida. Escopo pequeno: um bug, uma melhoria, um teste. Não comece feature nova.','saas'),
-    block('10:15','12:00','Demandas do trabalho','','trabalho'),
-    block('12:00','12:40','Almoço','Coma longe da mesa. Em dia contínuo isso vale mais que meia hora de estudo.','rotina'),
-    block('12:40','13:10','Faculdade EAD','Só assistir, sem anotar. O objetivo hoje é não acumular atraso.','estudo'),
-    block('13:10','13:25','Descanso sem tela','Quinze minutos. Curto, mas não pule.','descanso'),
-    block('13:25','15:20','Demandas do trabalho','','trabalho'),
-    block('15:20','15:30','Micro-descanso','Obrigatório em dia pesado, não opcional.','descanso'),
-    block('15:30','17:30','Demandas do trabalho','','trabalho'),
-    block('17:30','18:00','SaaS — fechamento mínimo','Um commit pequeno e a nota do que fazer amanhã. Trinta minutos preserva o hábito e o contexto.','saas')
-  ]
-};
-
-const getThursdayWorkBlocks = (level: DemandLevel): ScheduleBlock[] => {
-  const base = weekdayWorkBlocks[level].map((item) => ({ ...item }));
-  if(level === 'continuo'){
-    const index = base.findIndex((item) => item.title === 'Faculdade EAD');
-    base[index] = block('12:40','13:10','Carreira — versão curta','Mande uma mensagem pra alguém da área e salve duas vagas. Cinco minutos de esforço, e o hábito semanal não morre no dia cheio.','estudo');
-  } else {
-    const index = base.findIndex((item) => item.title === 'Estudo do nicho');
-    base[index] = block('15:10','16:10','Carreira','Aplicar em vagas, mandar mensagem pra uma pessoa da área e atualizar uma seção do LinkedIn. Cobre o hábito semanal inteiro num bloco só.','estudo');
-  }
-  return base;
+    block('09:00', '09:15', 'Triagem do dia', 'Dia pesado: defina agora o que precisa sair hoje e o que pode esperar. Avisar antes vale mais que entregar tarde.', 'trabalho'),
+    block('09:15', '10:00', 'Projeto de aprendizado — reduzido', 'Quarenta e cinco minutos, escopo pequeno. Não comece coisa nova.', 'projeto'),
+    block('10:00', '12:00', 'Demandas do trabalho', '', 'trabalho'),
+    block('12:00', '12:40', 'Almoço', 'Coma longe da mesa. Em dia contínuo isso vale mais que meia hora de estudo.', 'rotina'),
+    block('12:40', '13:10', 'LeetCode', '', 'estudo', null, 'leet'),
+    block('13:10', '13:25', 'Descanso sem tela', 'Quinze minutos. Curto, mas não pule.', 'descanso'),
+    block('13:25', '15:30', 'Demandas do trabalho', '', 'trabalho'),
+    block('15:30', '15:40', 'Micro-descanso', 'Obrigatório em dia pesado, não opcional.', 'descanso'),
+    block('15:40', '17:40', 'Demandas do trabalho', '', 'trabalho'),
+    block('17:40', '18:00', 'Fechamento do dia', 'Um commit e a nota do que fazer amanhã. Em dia contínuo sobrevivem duas coisas: o LeetCode e isso aqui. A trilha cai hoje e volta amanhã — tudo bem.', 'projeto'),
+  ],
 };
 
 const saturdayWorkBlocks: Record<DemandLevel, ScheduleBlock[]> = {
   livre: [
-    block('08:30','08:40','Triagem do dia','','trabalho'),
-    block('08:40','10:10','SaaS — bloco profundo','Sábado livre é o melhor bloco da semana depois de segunda. Use pra feature grande.','saas'),
-    block('10:10','10:20','Micro-descanso','','descanso'),
-    block('10:20','11:50','SaaS — segundo bloco','','saas'),
-    block('11:50','12:00','Anotar onde parou','Dez minutos escrevendo o estado atual. Volta muito mais barata depois do almoço.','saas'),
-    block('12:00','13:00','Almoço','','rotina'),
-    block('13:00','13:50','Faculdade EAD','','estudo'),
-    block('13:50','14:00','Micro-descanso','','descanso'),
-    block('14:00','15:30','SaaS — terceiro bloco','','saas'),
-    block('15:30','15:40','Micro-descanso','','descanso'),
-    block('15:40','16:30','Fechamento da semana do projeto','Commit, README atualizado e o roadmap dos próximos sete dias escrito. Uma vez por mês, use esse bloco pra auditar os repositórios e arquivar o que está velho.','saas')
+    block('08:30', '08:40', 'Triagem do dia', '', 'trabalho'),
+    block('08:40', '10:10', 'Projeto de aprendizado', '', 'projeto'),
+    block('10:10', '10:20', 'Micro-descanso', '', 'descanso'),
+    block('10:20', '12:00', 'Leitura longa', 'Cem minutos no livro da fase, com caneta e marcação. É o bloco que sustenta a trilha da semana seguinte.', 'estudo'),
+    block('12:00', '13:00', 'Almoço', '', 'rotina'),
+    block('13:00', '14:30', 'Projeto de aprendizado — parte 2', '', 'projeto'),
+    block('14:30', '14:40', 'Micro-descanso', '', 'descanso'),
+    block('14:40', '15:10', 'LeetCode', '', 'estudo', null, 'leet'),
+    block('15:10', '15:20', 'Micro-descanso', '', 'descanso'),
+    block('15:20', '16:30', 'Fechar a semana e publicar', 'Termine o projeto da semana num estado apresentável, escreva o README explicando o que ele prova e publique. Aprendizado que ninguém vê não conta como portfólio.', 'projeto'),
   ],
   medio: [
-    block('08:30','08:45','Triagem do dia','','trabalho'),
-    block('08:45','10:15','SaaS — bloco profundo','','saas'),
-    block('10:15','10:25','Micro-descanso','','descanso'),
-    block('10:25','12:00','Demandas do trabalho','','trabalho'),
-    block('12:00','13:00','Almoço','','rotina'),
-    block('13:00','13:50','Faculdade EAD','','estudo'),
-    block('13:50','14:00','Micro-descanso','','descanso'),
-    block('14:00','15:30','Demandas do trabalho','','trabalho'),
-    block('15:30','15:40','Micro-descanso','','descanso'),
-    block('15:40','16:30','Fechamento da semana do projeto','Commit, README e roadmap dos próximos sete dias. Uma vez por mês, auditoria dos repositórios aqui.','saas')
+    block('08:30', '08:45', 'Triagem do dia', '', 'trabalho'),
+    block('08:45', '09:45', 'Projeto de aprendizado', '', 'projeto'),
+    block('09:45', '10:00', 'Micro-descanso', '', 'descanso'),
+    block('10:00', '12:00', 'Demandas do trabalho', '', 'trabalho'),
+    block('12:00', '13:00', 'Almoço', '', 'rotina'),
+    block('13:00', '14:15', 'Leitura longa', 'Setenta e cinco minutos no livro da fase, com caneta. Sustenta a trilha da semana seguinte.', 'estudo'),
+    block('14:15', '14:30', 'Micro-descanso', '', 'descanso'),
+    block('14:30', '15:30', 'Demandas do trabalho', '', 'trabalho'),
+    block('15:30', '16:00', 'LeetCode', '', 'estudo', null, 'leet'),
+    block('16:00', '16:30', 'Fechar a semana e publicar', 'README atualizado e um parágrafo publicado sobre o que você entendeu essa semana.', 'projeto'),
   ],
   continuo: [
-    block('08:30','08:45','Triagem do dia','','trabalho'),
-    block('08:45','09:45','SaaS — bloco profundo reduzido','Uma hora protegida, escopo pequeno.','saas'),
-    block('09:45','12:00','Demandas do trabalho','','trabalho'),
-    block('12:00','13:00','Almoço','','rotina'),
-    block('13:00','13:20','Faculdade EAD','Só assistir.','estudo'),
-    block('13:20','15:50','Demandas do trabalho','','trabalho'),
-    block('15:50','16:00','Micro-descanso','','descanso'),
-    block('16:00','16:30','Fechamento mínimo','Um commit e a nota da semana. Trinta minutos.','saas')
-  ]
+    block('08:30', '08:45', 'Triagem do dia', '', 'trabalho'),
+    block('08:45', '09:30', 'Projeto de aprendizado — reduzido', '', 'projeto'),
+    block('09:30', '12:00', 'Demandas do trabalho', '', 'trabalho'),
+    block('12:00', '13:00', 'Almoço', '', 'rotina'),
+    block('13:00', '13:30', 'LeetCode', '', 'estudo', null, 'leet'),
+    block('13:30', '15:50', 'Demandas do trabalho', '', 'trabalho'),
+    block('15:50', '16:00', 'Micro-descanso', '', 'descanso'),
+    block('16:00', '16:30', 'Leitura e fechar a semana', 'Meia hora de livro e um push. Mesmo em semana ruim, alguma coisa vai pro ar.', 'estudo'),
+  ],
 };
 
 export const DAYS: Record<DayId, AgendaDay> = {
   seg: {
-    name:'Segunda-feira', shortName:'Seg', meta:'Folga do trabalho · Academia de manhã · Vôlei 20:50',
-    hasDemand:false,
-    note:'Segunda não tem expediente. O dia inteiro é seu — é o único dia da semana em que você consegue duas horas seguidas de projeto com a cabeça totalmente livre.',
-    blocks:[
-      block('07:00','07:15','Acordar, água, luz da janela','Mobilidade leve. Você treina em quarenta minutos.','rotina'),
-      block('07:15','07:40','Café da manhã','Refeição de verdade — você vai treinar pesado às oito.','rotina'),
-      block('07:40','08:00','Trajeto até a academia','','rotina'),
-      block('08:00','09:15','Academia','Setenta e cinco minutos. Treino mais longo da semana, aproveite o dia sem pressa.','treino'),
-      block('09:15','09:35','Volta pra casa','','rotina'),
-      block('09:35','10:10','Banho e refeição pós-treino','','rotina'),
-      block('10:10','11:40','SaaS — bloco profundo','O maior bloco da semana. Reserve pra feature grande, não pra ajuste pequeno.','saas'),
-      block('11:40','11:55','Micro-descanso','','descanso'),
-      block('11:55','12:40','SaaS — continuação','Mesma feature. Termine deixando algo funcionando, nem que seja pequeno.','saas'),
-      block('12:40','13:40','Almoço e descanso sem tela','','descanso'),
-      block('13:40','14:40','Faculdade EAD','','estudo'),
-      block('14:40','14:50','Micro-descanso','','descanso'),
-      block('14:50','15:35','Lógica','Um problema em JavaScript e, mais importante, cinco linhas escritas sobre onde você errou. Duas vezes por semana: segunda e quinta.','estudo'),
-      block('15:35','16:35','Estudo do nicho','','estudo',null,'trilha'),
-      block('16:35','18:00','Livre','Descanso de verdade. Não encaixe nada aqui — você joga vôlei em quatro horas.','descanso'),
-      block('18:00','19:00','Jantar','','rotina'),
-      block('19:00','20:00','Videogame','Uma hora cheia.','pessoal'),
-      block('20:00','20:40','Livre e preparo do vôlei','','descanso'),
-      block('20:40','20:50','Trajeto até o vôlei','','rotina'),
-      block('20:50','22:00','Vôlei','','treino'),
-      block('22:00','22:40','Banho morno, alongamento, ceia leve','Carboidrato com proteína. Banho morno ajuda a baixar a frequência cardíaca.','rotina'),
-      block('22:40','23:15','Sem tela, luz baixa','','descanso'),
-      block('23:15','07:00','Dormir','Quinze minutos mais tarde que nos outros dias, de propósito: exercício vigoroso terminando menos de uma hora antes de deitar é o único cenário em que treino noturno atrapalha o sono.','sono')
-    ]
-  },
-  ter: {
-    name:'Terça-feira', shortName:'Ter', meta:'Trabalho 09:00–18:00 · Academia à noite',
-    hasDemand:true, morning:manhaSemana, getWorkBlocks:(level: DemandLevel) => weekdayWorkBlocks[level],
-    evening:noiteAcademia('SaaS em modo baixa energia','Bug pequeno, refatorar, escrever documentação. Você já fez o bloco profundo de manhã — se a energia não estiver aí, pule e jogue. Insistir aqui é como o plano inteiro quebra em três semanas.')
-  },
-  qua: {
-    name:'Quarta-feira', shortName:'Qua', meta:'Trabalho 09:00–18:00 · Academia à noite',
-    hasDemand:true, morning:manhaSemana, getWorkBlocks:(level: DemandLevel) => weekdayWorkBlocks[level],
-    evening:noiteAcademia('Escrever o resumo de um bug que você resolveu','Meia página: qual era o sintoma, qual era a causa real, como você achou. Vira post, vira resposta de entrevista, vira documentação. Opcional se estiver acabado.')
-  },
-  qui: {
-    name:'Quinta-feira', shortName:'Qui', meta:'Trabalho 09:00–18:00 · Noite com a namorada',
-    hasDemand:true, morning:manhaSemana, getWorkBlocks:getThursdayWorkBlocks,
-    evening:[
-      block('18:00','18:05','Saída do trabalho','','rotina'),
-      block('18:05','23:00','Livre — tempo com a namorada','Nada de estudo, nada de projeto, nada de commit. Meia hora apressada antes de um compromisso importante não rende nada e cria atrito. O bloco profundo da manhã já cobriu o dia.','pessoal','inegociável'),
-      block('23:00','07:00','Dormir','Se passar um pouco hoje, tudo bem. Não é todo dia.','sono')
-    ]
-  },
-  sex: {
-    name:'Sexta-feira', shortName:'Sex', meta:'Trabalho 09:00–18:00 · Academia à noite',
-    hasDemand:true, morning:manhaSemana, getWorkBlocks:(level: DemandLevel) => weekdayWorkBlocks[level],
-    evening:noiteAcademia('Postar o progresso da semana','Push do que avançou, README atualizado e um parágrafo curto no LinkedIn ou no GitHub sobre o que mudou no projeto essa semana. Fecha a semana do SaaS.')
-  },
-  sab: {
-    name:'Sábado', shortName:'Sáb', meta:'Trabalho 08:30–16:30 · A partir das 18:00 com a namorada',
-    hasDemand:true,
-    morning:[
-      block('07:00','07:10','Acordar, água, luz da janela','','rotina'),
-      block('07:10','07:40','Café da manhã','','rotina'),
-      block('07:40','08:00','Revisão espaçada','Vinte minutos de cartões. Versão curta, porque hoje você entra mais cedo.','estudo'),
-      block('08:00','08:20','Banho e se arrumar','','rotina'),
-      block('08:20','08:30','Trajeto até o trabalho','','rotina')
+    name: 'Segunda-feira', shortName: 'Seg', meta: 'Folga do trabalho · Academia de manhã · Vôlei 20:50', hasDemand: false,
+    note: 'Segunda não tem expediente. Na primeira segunda de cada mês, o bloco das 10:10 vira manutenção: auditoria dos repositórios, arquivar o velho, contribuir com um repositório aberto e limpar um código antigo seu.',
+    blocks: [
+      block('07:00', '07:15', 'Acordar, água, luz da janela', 'Mobilidade leve. Você treina em quarenta minutos.', 'rotina'),
+      block('07:15', '07:40', 'Café da manhã', 'Refeição de verdade — o treino de hoje é o mais longo da semana.', 'rotina'),
+      block('07:40', '08:00', 'Trajeto até a academia', '', 'rotina'),
+      block('08:00', '09:15', 'Academia', 'Setenta e cinco minutos, sem pressa de horário.', 'treino'),
+      block('09:15', '09:35', 'Volta pra casa', '', 'rotina'),
+      block('09:35', '10:10', 'Banho e refeição pós-treino', '', 'rotina'),
+      block('10:10', '11:10', 'Projeto de aprendizado', 'Uma hora implementando o tema da trilha. Segunda é o dia mais tranquilo pra mexer em coisa nova.', 'projeto', '1ª do mês: manutenção'),
+      block('11:10', '11:20', 'Micro-descanso', '', 'descanso'),
+      block('11:20', '12:30', 'Trilha', '', 'estudo', null, 'trilha'),
+      block('12:30', '13:30', 'Almoço e descanso sem tela', '', 'descanso'),
+      block('13:30', '14:30', 'Faculdade EAD', '', 'estudo'),
+      block('14:30', '14:40', 'Micro-descanso', '', 'descanso'),
+      block('14:40', '15:10', 'LeetCode', '', 'estudo', null, 'leet'),
+      block('15:10', '15:50', 'Leitura do livro', 'Quarenta minutos no livro da fase.', 'estudo'),
+      block('15:50', '16:10', 'Hábito da semana', '', 'estudo', null, 'habito'),
+      block('16:10', '18:00', 'Livre', 'Descanso de verdade. Não encaixe nada — você joga vôlei em quatro horas.', 'descanso'),
+      block('18:00', '19:00', 'Jantar', '', 'rotina'),
+      block('19:00', '20:00', 'Videogame', 'Uma hora cheia.', 'pessoal'),
+      block('20:00', '20:40', 'Livre e preparo do vôlei', '', 'descanso'),
+      block('20:40', '20:50', 'Trajeto até o vôlei', '', 'rotina'),
+      block('20:50', '22:00', 'Vôlei', '', 'treino'),
+      block('22:00', '22:40', 'Banho morno, alongamento, ceia leve', 'Carboidrato com proteína. Banho morno ajuda a baixar a frequência cardíaca.', 'rotina'),
+      block('22:40', '23:15', 'Sem tela, luz baixa', '', 'descanso'),
+      block('23:15', '07:00', 'Dormir', 'Quinze minutos mais tarde de propósito: exercício vigoroso terminando menos de uma hora antes de deitar é o único cenário em que treino noturno atrapalha o sono.', 'sono'),
     ],
-    getWorkBlocks:(level: DemandLevel) => saturdayWorkBlocks[level],
-    evening:[
-      block('16:30','16:35','Saída do trabalho','','rotina'),
-      block('16:35','17:00','Descanso','Deitar, sem tela. Você trabalhou oito horas e ainda tem a noite inteira pela frente.','descanso'),
-      block('17:00','17:45','Banho, lanche e se arrumar','','rotina'),
-      block('17:45','18:00','Ajustes finais','','rotina'),
-      block('18:00','23:30','Livre — tempo com a namorada','Bloco fechado. Sem tarefa, sem exceção.','pessoal','inegociável'),
-      block('23:30','07:30','Dormir','Horário solto hoje. Domingo você acorda sem alarme.','sono')
-    ]
+  },
+  ter: { name: 'Terça-feira', shortName: 'Ter', meta: 'Trabalho 09:00–18:00 · Academia à noite', hasDemand: true, morning: weekdayMorning, getWorkBlocks: (level) => weekdayWorkBlocks[level], evening: gymEvening },
+  qua: { name: 'Quarta-feira', shortName: 'Qua', meta: 'Trabalho 09:00–18:00 · Academia à noite', hasDemand: true, morning: weekdayMorning, getWorkBlocks: (level) => weekdayWorkBlocks[level], evening: gymEvening },
+  qui: {
+    name: 'Quinta-feira', shortName: 'Qui', meta: 'Trabalho 09:00–18:00 · Noite com a namorada', hasDemand: true, morning: weekdayMorning, getWorkBlocks: (level) => weekdayWorkBlocks[level],
+    evening: [
+      block('18:00', '18:05', 'Saída do trabalho', '', 'rotina'),
+      block('18:05', '23:00', 'Livre — tempo com a namorada', 'Nada de estudo, nada de projeto, nada de commit. Meia hora apressada antes de um compromisso importante não rende e cria atrito.', 'pessoal', 'inegociável'),
+      block('23:00', '07:00', 'Dormir', 'Se passar um pouco hoje, tudo bem. Não é todo dia.', 'sono'),
+    ],
+  },
+  sex: { name: 'Sexta-feira', shortName: 'Sex', meta: 'Trabalho 09:00–18:00 · Academia à noite', hasDemand: true, morning: weekdayMorning, getWorkBlocks: (level) => weekdayWorkBlocks[level], evening: gymEvening },
+  sab: {
+    name: 'Sábado', shortName: 'Sáb', meta: 'Trabalho 08:30–16:30 · A partir das 18:00 com a namorada', hasDemand: true,
+    morning: [
+      block('07:00', '07:10', 'Acordar, água, luz da janela', '', 'rotina'),
+      block('07:10', '07:40', 'Café da manhã', '', 'rotina'),
+      block('07:40', '08:00', 'Revisão espaçada', 'Versão curta de vinte minutos, porque hoje você entra mais cedo.', 'estudo'),
+      block('08:00', '08:20', 'Banho e se arrumar', '', 'rotina'),
+      block('08:20', '08:30', 'Trajeto até o trabalho', '', 'rotina'),
+    ],
+    getWorkBlocks: (level) => saturdayWorkBlocks[level],
+    evening: [
+      block('16:30', '16:35', 'Saída do trabalho', '', 'rotina'),
+      block('16:35', '17:00', 'Descanso', 'Deitar, sem tela. Você trabalhou oito horas e ainda tem a noite pela frente.', 'descanso'),
+      block('17:00', '17:45', 'Banho, lanche e se arrumar', '', 'rotina'),
+      block('17:45', '18:00', 'Ajustes finais', '', 'rotina'),
+      block('18:00', '23:30', 'Livre — tempo com a namorada', 'Bloco fechado, sem exceção.', 'pessoal', 'inegociável'),
+      block('23:30', '07:30', 'Dormir', 'Horário solto hoje. Domingo você acorda sem alarme.', 'sono'),
+    ],
   },
   dom: {
-    name:'Domingo', shortName:'Dom', meta:'Folga do projeto · Preparação da semana',
-    hasDemand:false,
-    note:'Domingo é o dia em que você não toca no SaaS. Sim, quebra a sequência. Seis dias por semana com uma folga real sustenta por meses; sete dias não sustenta.',
-    blocks:[
-      block('08:00','08:30','Acordar sem alarme, água, café','','rotina'),
-      block('08:30','09:30','Caminhada e alongamento','Descanso ativo. Fora de casa, de preferência.','treino'),
-      block('09:30','10:30','Café da manhã com calma','','rotina'),
-      block('10:30','12:00','Meal prep da semana','Inclua os lanches pré-treino de terça, quarta e sexta já porcionados. É o que faz o bloco das 18:05 caber em quinze minutos.','rotina'),
-      block('12:00','13:00','Almoço','','rotina'),
-      block('13:00','13:30','Revisão da semana','Olhe a planilha de adesão: quantos dias o bloco profundo aconteceu, quantas features saíram, como estava a energia às quinze horas. Uma vez por mês, estenda pra uma hora e meia e faça também o roadmap do mês e a limpeza dos repositórios.','estudo'),
-      block('13:30','18:00','Livre','Videogame, sair, não fazer nada. Sem código.','pessoal'),
-      block('18:00','19:00','Jantar','','rotina'),
-      block('19:00','21:30','Livre','','pessoal'),
-      block('21:30','22:30','Preparar a semana','Roupa de academia separada, mochila pronta e a primeira tarefa de segunda escrita num papel. Segunda de manhã você executa, não decide.','rotina'),
-      block('22:30','23:00','Sem tela','','descanso'),
-      block('23:00','07:00','Dormir','','sono')
-    ]
-  }
+    name: 'Domingo', shortName: 'Dom', meta: 'Folga do projeto · Consolidação e preparação', hasDemand: false,
+    note: 'Domingo não tem projeto e não tem trilha. Sim, quebra a sequência. Seis dias por semana com uma folga real sustenta por meses; sete dias não sustenta, e o custo de recomeçar depois do abandono é maior que o de um domingo parado.',
+    blocks: [
+      block('08:00', '08:30', 'Acordar sem alarme, água, café', '', 'rotina'),
+      block('08:30', '09:30', 'Caminhada e alongamento', 'Descanso ativo, fora de casa de preferência.', 'treino'),
+      block('09:30', '10:30', 'Café da manhã com calma', '', 'rotina'),
+      block('10:30', '12:00', 'Meal prep da semana', 'Inclua os lanches pré-treino de terça, quarta e sexta já porcionados. É o que faz o bloco das 18:05 caber em quinze minutos.', 'rotina'),
+      block('12:00', '13:00', 'Almoço', '', 'rotina'),
+      block('13:00', '13:45', 'Notas da semana viram página pesquisável', 'Junte as anotações soltas dos cinco blocos de trilha e da leitura num lugar só, organizado e buscável. Anotação que você não acha de novo é anotação que não existe.', 'estudo'),
+      block('13:45', '14:05', 'LeetCode leve', 'Um problema fácil, sem cronômetro, só pra não quebrar a corrente. Opcional de verdade: se a semana foi puxada, pule sem culpa.', 'estudo', 'opcional'),
+      block('14:05', '14:35', 'Revisão da semana', 'Quantos blocos profundos aconteceram, quantos problemas você resolveu, como estava a energia às quinze horas. Uma vez por mês, estenda pra uma hora e meia e escreva o roadmap do mês seguinte.', 'estudo'),
+      block('14:35', '18:00', 'Livre', 'Videogame, sair, não fazer nada. Sem código.', 'pessoal'),
+      block('18:00', '19:00', 'Jantar', '', 'rotina'),
+      block('19:00', '21:30', 'Livre', '', 'pessoal'),
+      block('21:30', '22:30', 'Preparar a semana', 'Roupa de academia separada, mochila pronta e a primeira tarefa de segunda escrita num papel. Segunda de manhã você executa, não decide.', 'rotina'),
+      block('22:30', '23:00', 'Sem tela', '', 'descanso'),
+      block('23:00', '07:00', 'Dormir', '', 'sono'),
+    ],
+  },
 };
 
+export const DAY_ORDER: DayId[] = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'];
 
-export const DAY_ORDER: DayId[] = ['seg','ter','qua','qui','sex','sab','dom'];
-
-export const DEMAND_NOTES: Record<DemandLevel, string> = {
-  livre:'Sem demanda hoje: o expediente inteiro é seu. Quase cinco horas de projeto e duas de estudo. É o dia de atacar feature grande, pagar dívida técnica e adiantar faculdade — não de responder e-mail devagar.',
-  medio:'Cenário padrão. O trabalho ocupa cerca de três horas e meia e você ainda protege duas horas e dez de projeto, uma hora de estudo e meia hora de faculdade. Se o dia virar, o que encolhe primeiro é o estudo — nunca o bloco profundo da manhã.',
-  continuo:'Dia pesado. O trabalho leva quase seis horas e você abre mão do estudo do nicho. Mantenha só duas coisas: a hora protegida de manhã e os trinta minutos de fechamento. Perder o dia inteiro é aceitável; perder o contexto do projeto custa dois dias pra recuperar.'
-};

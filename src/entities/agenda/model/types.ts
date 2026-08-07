@@ -1,9 +1,9 @@
 export type DayId = 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab' | 'dom';
 export type DemandLevel = 'livre' | 'medio' | 'continuo';
 export type StudyPhase = 'f1' | 'f2' | 'f3';
-export type StudyTheme = 'sd' | 'backA' | 'backB' | 'ia';
+export type StudyTheme = 'seg' | 'ter' | 'qua' | 'qui' | 'sex';
 export type CategoryId =
-  | 'saas'
+  | 'projeto'
   | 'estudo'
   | 'trabalho'
   | 'treino'
@@ -12,8 +12,8 @@ export type CategoryId =
   | 'sono'
   | 'rotina';
 
-export type ScheduleTag = 'opcional' | 'inegociável' | null;
-export type ScheduleSlot = 'trilha' | 'trilha2' | null;
+export type ScheduleTag = 'opcional' | 'inegociável' | '1ª do mês: manutenção' | null;
+export type ScheduleSlot = 'trilha' | 'trilha2' | 'leet' | 'habito' | null;
 
 export interface CategoryDefinition {
   color: string;
@@ -37,10 +37,11 @@ export interface StudyTopic {
 
 export interface StudyPhaseDefinition {
   note: string;
-  sd: StudyTopic;
-  backA: StudyTopic;
-  backB: StudyTopic;
-  ia: StudyTopic;
+  seg: StudyTopic;
+  ter: StudyTopic;
+  qua: StudyTopic;
+  qui: StudyTopic;
+  sex: StudyTopic;
 }
 
 export interface AgendaDay {

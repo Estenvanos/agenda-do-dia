@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agenda do dia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --concrete:#E4E7EB; --panel:#FFFFFF; --ink:#12161C;
+  --rule:#CBD2DA; --rule-soft:#E3E7EC; --muted:#69727E;
+  --projeto:#1E4FA1; --estudo:#216B58; --trabalho:#5C6672;
+  --treino:#8A4C9C; --pessoal:#A63A5E; --descanso:#959BA4;
+  --sono:#39414F; --rotina:#7A8290;
+  --livre:#216B58; --medio:#9A6B10; --continuo:#A8342F;
+  --f1:#1E4FA1; --f2:#216B58; --f3:#8A4C9C;
+  --mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans:"Archivo", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--concrete);color:var(--ink);font-family:var(--sans);
+  font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.wrap{max-width:920px;margin:0 auto;padding:28px 20px 80px}
+
+.masthead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
+  flex-wrap:wrap;padding-bottom:14px;border-bottom:2px solid var(--ink)}
+.masthead h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-.03em;
+  line-height:1;text-transform:uppercase}
+.masthead .sub{font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);margin-top:7px}
+.stamp{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);text-align:right;line-height:1.7}
+.stamp b{color:var(--ink);font-weight:600}
+
+.days{display:grid;grid-template-columns:repeat(7,1fr);margin-top:22px;
+  border:1px solid var(--rule);background:var(--panel)}
+.days button{appearance:none;background:transparent;border:0;border-right:1px solid var(--rule);
+  padding:12px 4px 11px;cursor:pointer;font-family:var(--mono);font-size:12px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  transition:background .12s,color .12s}
+.days button:last-child{border-right:0}
+.days button:hover{background:#F1F4F7;color:var(--ink)}
+.days button .dot{display:block;width:4px;height:4px;border-radius:50%;
+  background:var(--ink);margin:5px auto 0;opacity:0}
+.days button.is-today .dot{opacity:.45}
+.days button[aria-selected="true"]{background:var(--ink);color:#fff}
+.days button[aria-selected="true"] .dot{background:#fff;opacity:1}
+.days button:focus-visible{outline:2px solid var(--projeto);outline-offset:-2px;z-index:2}
+
+.picker{margin-top:16px;border:1px solid var(--rule);background:var(--panel);padding:16px 18px}
+.picker .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:11px}
+.opts{display:flex;gap:8px;flex-wrap:wrap}
+.opt{appearance:none;cursor:pointer;background:var(--panel);border:1px solid var(--rule);
+  padding:9px 15px 8px;text-align:left;font-family:var(--sans);font-size:13.5px;
+  font-weight:600;color:var(--ink);display:flex;align-items:center;gap:9px;
+  transition:border-color .12s,background .12s}
+.opt:hover{background:#F1F4F7}
+.opt .bar{width:3px;height:15px;background:var(--muted);display:block;flex:0 0 auto}
+.opt[data-k="livre"] .bar{background:var(--livre)}
+.opt[data-k="medio"] .bar{background:var(--medio)}
+.opt[data-k="continuo"] .bar{background:var(--continuo)}
+.opt[data-p="f1"] .bar{background:var(--f1)}
+.opt[data-p="f2"] .bar{background:var(--f2)}
+.opt[data-p="f3"] .bar{background:var(--f3)}
+.opt small{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);font-weight:400;margin-top:2px}
+.opt[aria-pressed="true"]{border-color:var(--ink);background:#EDF0F3;
+  box-shadow:inset 0 -2px 0 var(--ink)}
+.opt:focus-visible{outline:2px solid var(--projeto);outline-offset:2px}
+.note{margin-top:12px;font-size:13px;color:var(--muted);
+  border-left:2px solid var(--rule);padding-left:11px;max-width:66ch}
+.picker.is-off .opts{opacity:.35;pointer-events:none}
+
+.totals{display:flex;flex-wrap:wrap;margin-top:16px;border:1px solid var(--rule);
+  background:var(--panel)}
+.tot{flex:1 1 120px;padding:13px 15px;border-right:1px solid var(--rule-soft)}
+.tot:last-child{border-right:0}
+.tot .k{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);display:flex;align-items:center;gap:6px}
+.tot .k i{width:7px;height:7px;display:block;font-style:normal}
+.tot .v{font-family:var(--mono);font-size:21px;font-weight:600;margin-top:5px;
+  letter-spacing:-.02em}
+.tot.zero .v{color:var(--rule)}
+
+.sheet{margin-top:16px;border:1px solid var(--rule);background:var(--panel)}
+.sheet-head{display:flex;justify-content:space-between;align-items:baseline;
+  padding:14px 18px 12px;border-bottom:1px solid var(--ink);gap:12px;flex-wrap:wrap}
+.sheet-head h2{margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em;
+  text-transform:uppercase}
+.sheet-head span{font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  color:var(--muted);text-transform:uppercase}
+
+.row{display:grid;grid-template-columns:78px 4px 1fr;border-bottom:1px solid var(--rule-soft);
+  position:relative}
+.row:last-child{border-bottom:0}
+.row .t{padding:11px 12px 11px 18px;border-right:1px solid var(--rule-soft);
+  font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:-.02em}
+.row .t small{display:block;font-size:10.5px;font-weight:400;color:var(--muted);
+  margin-top:2px;letter-spacing:0}
+.row .bar{width:4px;background:var(--rotina)}
+.row .c{padding:11px 18px 12px 15px}
+.row h3{margin:0;font-size:14.5px;font-weight:600;letter-spacing:-.01em;
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.row p{margin:4px 0 0;font-size:13px;color:var(--muted);max-width:66ch}
+.row.dim{background:#FAFBFC}
+.row.dim h3{font-weight:500;color:#4C555F}
+.row.is-now{background:#F0F3F7}
+.row.is-now::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--ink)}
+
+.pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  border:1px solid var(--rule);padding:2px 6px 1px;color:var(--muted);font-weight:500}
+.pill.now{background:var(--ink);border-color:var(--ink);color:#fff}
+.pill.opt{border-style:dashed}
+.pill.hard{border-color:var(--pessoal);color:var(--pessoal)}
+.pill.mes{border-color:var(--projeto);color:var(--projeto)}
+
+.ledger{margin-top:16px;border:1px solid var(--rule);background:var(--panel)}
+.ledger-head{padding:14px 18px 12px;border-bottom:1px solid var(--ink)}
+.ledger-head h2{margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em;
+  text-transform:uppercase}
+.ledger-head p{margin:5px 0 0;font-size:13px;color:var(--muted);max-width:66ch}
+.cols{display:grid;grid-template-columns:repeat(3,1fr)}
+.col{border-right:1px solid var(--rule-soft);padding:15px 18px 18px}
+.col:last-child{border-right:0}
+.col h4{margin:0 0 11px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted)}
+.col ul{margin:0;padding:0;list-style:none}
+.col li{font-size:13.5px;padding:8px 0;border-top:1px solid var(--rule-soft);line-height:1.35}
+.col li:first-child{border-top:0;padding-top:0}
+.col li em{display:block;font-style:normal;font-family:var(--mono);font-size:10.5px;
+  color:var(--muted);letter-spacing:.04em;margin-top:3px}
+
+.foot{margin-top:22px;font-size:12.5px;color:var(--muted);display:grid;gap:7px;
+  border-top:1px solid var(--rule);padding-top:14px}
+.foot b{color:var(--ink);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:4px}
+.legend span{display:flex;align-items:center;gap:6px;font-family:var(--mono);
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.legend i{width:9px;height:9px;display:block}
+
+@media (max-width:720px){ .cols{grid-template-columns:1fr}
+  .col{border-right:0;border-top:1px solid var(--rule-soft)}
+  .col:first-child{border-top:0} }
+@media (max-width:600px){
+  .wrap{padding:20px 13px 60px}
+  .masthead h1{font-size:23px}
+  .days{grid-template-columns:repeat(4,1fr)}
+  .days button{border-bottom:1px solid var(--rule)}
+  .row{grid-template-columns:66px 4px 1fr}
+  .row .t{padding-left:11px;font-size:12px}
+  .row .c{padding-left:12px;padding-right:12px}
+  .tot{flex:1 1 44%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{ body{background:#fff} .days,.picker{display:none}
+  .sheet,.totals,.ledger{border-color:#999} .row{break-inside:avoid} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <h1>Agenda do dia</h1>
+      <div class="sub">System design · Backend · Redes · Cloud · IA</div>
+    </div>
+    <div class="stamp" id="stamp"></div>
+  </header>
+
+  <nav class="days" id="days" role="tablist" aria-label="Dia da semana"></nav>
+
+  <section class="picker" id="demand">
+    <div class="lbl">Demanda do trabalho hoje</div>
+    <div class="opts" id="opts">
+      <button class="opt" data-k="livre" aria-pressed="false"><span class="bar"></span>Livre</button>
+      <button class="opt" data-k="medio" aria-pressed="true"><span class="bar"></span>Médio</button>
+      <button class="opt" data-k="continuo" aria-pressed="false"><span class="bar"></span>Contínuo</button>
+    </div>
+    <p class="note" id="demandNote"></p>
+  </section>
+
+  <section class="picker" id="phase">
+    <div class="lbl">Fase da trilha</div>
+    <div class="opts" id="phaseOpts">
+      <button class="opt" data-p="f1" aria-pressed="true"><span class="bar"></span><span>Fundação<small>Sem. 1–8 · redes</small></span></button>
+      <button class="opt" data-p="f2" aria-pressed="false"><span class="bar"></span><span>Operação<small>Sem. 9–16 · devops e cloud</small></span></button>
+      <button class="opt" data-p="f3" aria-pressed="false"><span class="bar"></span><span>Rigor<small>Sem. 17–24 · segurança</small></span></button>
+    </div>
+    <p class="note" id="phaseNote"></p>
+  </section>
+
+  <section class="totals" id="totals"></section>
+
+  <section class="sheet">
+    <div class="sheet-head">
+      <h2 id="sheetTitle"></h2>
+      <span id="sheetMeta"></span>
+    </div>
+    <div id="timeline"></div>
+  </section>
+
+  <section class="ledger">
+    <div class="ledger-head">
+      <h2>Ciclo de hábitos</h2>
+      <p>Cada hábito dos prints com o horário exato onde ele acontece. Se não tem horário, não existe.</p>
+    </div>
+    <div class="cols">
+      <div class="col">
+        <h4>Todo dia</h4>
+        <ul>
+          <li>Um problema de lógica e análise do erro<em>LeetCode · 16:20</em></li>
+          <li>Aprender um conceito central<em>Trilha · 15:10</em></li>
+          <li>Explicar em voz alta pra testar retenção<em>Revisão espaçada · 08:10</em></li>
+          <li>Commit no GitHub<em>Fechamento do dia · 17:30</em></li>
+          <li>Ler uma novidade de IA ou dev<em>08:40 · 10 min, uma fonte só</em></li>
+          <li>Avançar no projeto de aprendizado<em>09:15</em></li>
+        </ul>
+      </div>
+      <div class="col">
+        <h4>Toda semana</h4>
+        <ul>
+          <li>Ler código de gente mais experiente<em>Segunda · 15:50</em></li>
+          <li>Deixar o próprio código mais simples<em>Terça · 16:50</em></li>
+          <li>Escrever o relato de um erro que resolveu<em>Quarta · 16:50</em></li>
+          <li>Falar com um mentor ou alguém da área<em>Quinta · 16:50</em></li>
+          <li>Publicar progresso e README limpo<em>Sexta · 16:50 e sábado · 16:00</em></li>
+          <li>Um capítulo de livro, com caneta<em>Sábado · 13:00</em></li>
+          <li>Notas viram uma página pesquisável<em>Domingo · 13:00</em></li>
+        </ul>
+      </div>
+      <div class="col">
+        <h4>Todo mês</h4>
+        <ul>
+          <li>O que funcionou contra o que não funcionou<em>Domingo · 14:05, versão estendida</em></li>
+          <li>Roadmap do mês seguinte<em>Domingo · 14:05</em></li>
+          <li>Auditar repositórios e portfólio<em>Primeira segunda · 10:10</em></li>
+          <li>Arquivar o velho, remover ferramenta parada<em>Primeira segunda · 10:10</em></li>
+          <li>Contribuir com um repositório aberto<em>Primeira segunda · 10:10</em></li>
+          <li>Deixar um código antigo mais limpo<em>Primeira segunda · 10:10</em></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="legend" id="legend"></div>
+    <div><b>Projeto de aprendizado, não produto.</b> O bloco encolheu de 2h para 1h30 e mudou de função: agora ele existe pra você implementar o tema da trilha da semana. Um projeto por fase, descartável, com README explicando o que ele prova.</div>
+    <div><b>Redes, cloud, DevOps e segurança estão em ordem, não em paralelo.</b> Cloud sem redes é decorar nome de serviço. Segurança sem backend e cloud é decorar lista da OWASP. Por isso redes vem na fase 1 e segurança só na 3.</div>
+    <div><b>Almoço de sábado:</b> assumi 12:00–13:00. Se for outro, é o único ponto que precisa ser reescrito.</div>
+  </footer>
+
+</div>
+
+<script>
+const CAT={projeto:{c:'var(--projeto)',n:'Projeto'},estudo:{c:'var(--estudo)',n:'Estudo'},
+ trabalho:{c:'var(--trabalho)',n:'Trabalho'},treino:{c:'var(--treino)',n:'Treino'},
+ pessoal:{c:'var(--pessoal)',n:'Pessoal'},descanso:{c:'var(--descanso)',n:'Descanso'},
+ sono:{c:'var(--sono)',n:'Sono'},rotina:{c:'var(--rotina)',n:'Rotina'}};
+const b=(start,end,title,detail,cat,tag,slot)=>({start,end,title,detail,cat,tag,slot});
+
+/* trilha: fase -> dia da semana */
+const TRILHA={
+ f1:{nota:'Fase 1 — Fundação. Redes entra agora porque cloud e DevOps são construídos em cima dela: quem estuda nuvem sem saber o que é sub-rede acaba decorando nome de serviço. Ao fim das oito semanas você explica o que acontece entre o clique e a resposta, camada por camada, do pacote ao índice do banco.',
+  seg:{t:'System design — o caminho da requisição',d:'DNS, balanceador, aplicação, cache, banco. Latência contra throughput e cálculo grosseiro de escala. Desenhe no papel o sistema que você mexe no trabalho e marque com X onde ele quebraria com dez vezes o tráfego.'},
+  ter:{t:'Backend — Node por dentro',d:'Event loop, microtask contra macrotask, streams, backpressure, worker threads. Meça em vez de ler: trave o event loop de propósito e prove com clinic.js ou node --prof. Sem isso, "Node é assíncrono" continua sendo frase decorada.'},
+  qua:{t:'Dados — modelagem que aguenta',d:'No Mongo, modele pelo padrão de acesso e não por entidade. Embedding contra referência, índices compostos, regra ESR, explain() em toda query que você já escreveu. Conte quantas fazem varredura de coleção inteira.'},
+  qui:{t:'Redes — o que acontece de verdade',d:'DNS, handshake TCP, TLS, HTTP/1.1 contra HTTP/2 contra HTTP/3, keep-alive, o custo real de um round-trip. Redes é o único tema dessa lista que você consegue observar diretamente: abra a aba de rede do navegador ou o Wireshark e olhe os pacotes. Quase ninguém olha, e é o que torna o resto concreto.'},
+  sex:{t:'IA — a API na mão, sem framework',d:'Chamada direta ao modelo, streaming da resposta, saída estruturada em JSON, contagem de token e custo por requisição. Entenda o HTTP antes de tocar em LangChain: quase todo problema de IA em produção é problema de engenharia comum.'}},
+
+ f2:{nota:'Fase 2 — Operação. Aqui você deixa de só escrever código e passa a colocá-lo no ar com segurança e a enxergar o que ele faz depois do deploy. É a fase que mais muda como o mercado te enxerga, porque a maioria dos fullstack para no merge.',
+  seg:{t:'System design — falha e escala',d:'Idempotência, rate limiting, retry com backoff, circuit breaker, fila como amortecedor. Replicação, consistência eventual, CAP. Para cada um, escreva uma frase: que problema real resolve e o que custa em troca.'},
+  ter:{t:'Backend — cache e assincronia',d:'Redis como cache e como lock distribuído, estratégias de invalidação, filas de job com BullMQ pra tirar trabalho lento de dentro do request. Meta medida, não sentida: nenhuma rota acima de 300ms no p95.'},
+  qua:{t:'DevOps — do commit até produção',d:'Dockerfile multi-stage escrito do zero, pipeline de CI que roda teste e bloqueia merge quebrado, e observabilidade: log estruturado, métricas p50/p95/p99, tracing, health check. DevOps não é uma pilha de ferramentas, é encurtar a distância entre commit e produção sem aumentar o risco.'},
+  qui:{t:'Cloud — infraestrutura de verdade',d:'Modelos de serviço, e principalmente rede na nuvem: VPC, sub-rede, grupo de segurança, balanceador — é aqui que a fase 1 volta e faz sentido. Infraestrutura como código com Terraform. E leia a fatura: entender custo de nuvem é uma habilidade rara, e cara pra empresa que não tem.'},
+  sex:{t:'IA — busca semântica no seu stack',d:'Embeddings, chunking, estratégia de recuperação e busca vetorial no Atlas, que é onde o Mongo que você já usa encontra o assunto sem trocar de linguagem. Entenda por que um RAG mal feito é pior que nenhum RAG.'}},
+
+ f3:{nota:'Fase 3 — Rigor. Segurança só entra agora porque ela precisa de backend, redes e cloud pra não virar decoreba da lista da OWASP. E o exercício de quinta — desenhar em voz alta e se gravar — é o de maior retorno da trilha inteira: entrevista de arquitetura é falar sob perguntas, não escrever.',
+  seg:{t:'System design — decidir e registrar',d:'O trabalho de arquiteto é escolher e justificar, não desenhar bonito. Um ADR por semana sobre uma decisão real do projeto: contexto, opções consideradas, escolha, consequência aceita. Estude também os padrões que você ainda evita — event sourcing, CQRS, saga — pra conhecer o custo de cada um e não só a propaganda.'},
+  ter:{t:'Backend — o que separa CRUD de produto',d:'Multi-tenancy, autorização granular, migração sem downtime, versionamento de API, transações e garantias ACID. É o repertório de quem já manteve algo vivo em produção, e é exatamente o que se pergunta de pleno pra sênior.'},
+  qua:{t:'Segurança — ataque o seu próprio código',d:'OWASP Top 10 aplicado ao que você escreveu, não em teoria: injeção, autenticação quebrada, controle de acesso falho. Gestão e rotação de segredo, e cadeia de dependência — npm audit é o começo da conversa, não o fim. Tente invadir o seu projeto antes que alguém faça isso por você.'},
+  qui:{t:'System design aplicado — desenhar em voz alta',d:'Um sistema por semana em 45 minutos, falando: encurtador de URL, feed, upload de arquivo grande, sistema de fila, chat, notificação em massa. Comece por requisitos e cálculo de escala, termine por trade-offs. Grave o áudio e ouça — é ouvindo que você descobre onde travou e o que decorou sem entender.'},
+  sex:{t:'IA — fine-tuning e avaliação',d:'Fine-tuning resolve formato e estilo consistentes; conhecimento novo é RAG, não ajuste fino — confundir os dois é a forma mais cara de errar nessa área. Monte um dataset pequeno, rode um ajuste num modelo aberto e, principalmente, avalie: sem conjunto de avaliação, fine-tuning é fé.'}}
+};
+
+/* hábito semanal de 20 min, um por dia */
+const HABITO={
+ seg:{t:'Hábito — ler código de gente melhor',d:'Vinte minutos lendo um trecho de projeto aberto no seu stack. Não pra contribuir: pra ver como alguém experiente organiza pasta, nomeia função e trata erro. Ler código ensina mais por hora do que escrever.'},
+ ter:{t:'Hábito — simplificar o próprio código',d:'Abra o que você escreveu ontem e deixe mais curto e mais claro. Deletar linha é progresso. Se você não consegue explicar uma função em uma frase, ela faz coisa demais.'},
+ qua:{t:'Hábito — relato de um erro',d:'Meia página sobre um bug da semana: sintoma, causa real, como você achou. Vira post, vira resposta de entrevista, vira documentação. É o hábito de maior retorno da lista inteira.'},
+ qui:{t:'Hábito — rede e carreira',d:'Uma mensagem pra alguém da área ou pro seu mentor, duas vagas salvas e analisadas, uma seção do LinkedIn reescrita.'},
+ sex:{t:'Hábito — publicar a semana',d:'Push, README atualizado e um parágrafo curto no GitHub ou LinkedIn sobre o que você entendeu essa semana. Aprendizado que ninguém vê não conta como portfólio.'}
+};
+
+const LEET={t:'LeetCode — um problema por dia',
+ d:'Trinta minutos: vinte resolvendo, dez escrevendo onde você travou e qual padrão resolveria. O registro do erro vale mais que a solução. Se resolveu de primeira e sem esforço, suba o nível amanhã.'};
+
+/* ---------- peças fixas ---------- */
+const manhaSemana=[
+ b('07:00','07:15','Acordar, água, luz da janela','Abra a cortina antes de olhar o celular. Mobilidade de ombro e quadril, cinco minutos.','rotina'),
+ b('07:15','07:45','Café da manhã','Refeição de verdade, sentado.','rotina'),
+ b('07:45','08:10','Banho e se arrumar','Deixe a mochila da academia pronta agora, não à noite.','rotina'),
+ b('08:10','08:40','Revisão espaçada','Cartões do que a trilha cobriu nos últimos dias e um conceito explicado em voz alta, sem consultar. Todo card sai de um bloco da trilha ou da leitura — você não cria card de coisa que passou os olhos.','estudo'),
+ b('08:40','08:50','Leitura curta','Dez minutos numa fonte só sobre novidade de IA ou dev, com timer. Sem timer isso vira quarenta minutos de rolagem e come o bloco de projeto.','estudo'),
+ b('08:50','09:00','Trajeto até o trabalho','','rotina')
+];
+
+const noiteAcademia=[
+ b('18:00','18:05','Saída do trabalho','Cinco minutos até em casa.','rotina'),
+ b('18:05','18:20','Lanche pré-treino e trocar de roupa','Muito carboidrato, proteína moderada, quase nada de gordura e fibra. Banana com whey, ou pão com geleia e iogurte grego.','rotina'),
+ b('18:20','18:40','Trajeto até a academia','Se atrasar no trabalho, vá direto de lá com o lanche na mochila.','rotina'),
+ b('18:40','19:50','Academia','Anote carga e repetições dos quatro principais na hora, não depois.','treino'),
+ b('19:50','20:10','Volta pra casa','','rotina'),
+ b('20:10','20:45','Jantar e descanso passivo','Não encaixe nada aqui, de propósito.','descanso'),
+ b('20:45','21:20','Leitura do livro em modo leve','Trinta e cinco minutos de livro no papel, sem cobrança de anotação. Ler é a única coisa da trilha que funciona bem com o corpo cansado — codar às 20:45 depois de treinar não funciona.','estudo','opcional'),
+ b('21:20','22:00','Videogame','Se pulou o bloco anterior, você tem uma hora e quinze.','pessoal'),
+ b('22:00','23:00','Sem tela','Celular longe da cama, luz baixa, alongar ou ler no papel.','descanso'),
+ b('23:00','07:00','Dormir','Oito horas. É a variável que mais afeta tudo o que está acima.','sono')
+];
+
+/* ---------- expedientes terça a sexta ---------- */
+const expSemana={
+ livre:[
+  b('09:00','09:10','Triagem do dia','Confirme que não há pendência e avise quem precisa saber. Dez minutos, sem abrir código.','trabalho'),
+  b('09:10','10:40','Projeto de aprendizado','Implemente o que a trilha da semana explicou. O projeto existe pra provar o conceito, não pra virar produto.','projeto'),
+  b('10:40','10:50','Micro-descanso','Levantar, andar, água, olhar pra longe. Sem celular — rolar feed não recupera atenção.','descanso'),
+  b('10:50','12:00','Trilha — primeira parte','','estudo',null,'trilha'),
+  b('12:00','12:40','Almoço','','rotina'),
+  b('12:40','13:10','Faculdade EAD','Aula gravada ou leitura. Exigência baixa combina com o horário.','estudo'),
+  b('13:10','13:30','Descanso sem tela','Caminhada curta. Depois do almoço é a pior janela do dia.','descanso'),
+  b('13:30','14:40','Trilha — segunda parte','','estudo',null,'trilha2'),
+  b('14:40','14:50','Micro-descanso','','descanso'),
+  b('14:50','15:20','LeetCode','','estudo',null,'leet'),
+  b('15:20','16:20','Leitura do livro','Uma hora no livro da fase, com caneta. Dia livre é quando a leitura longa cabe sem culpa.','estudo'),
+  b('16:20','16:40','Hábito da semana','','estudo',null,'habito'),
+  b('16:40','17:30','Projeto de aprendizado — parte 2','Termine deixando algo funcionando, nem que seja pequeno.','projeto'),
+  b('17:30','18:00','Fechamento do dia','Commit, três linhas do que fazer amanhã e cinco cartões do que estudou hoje.','projeto')
+ ],
+ medio:[
+  b('09:00','09:15','Triagem do dia','Liste as demandas reais, responda só o urgente. Não abra código ainda.','trabalho'),
+  b('09:15','10:15','Projeto de aprendizado','Uma hora na melhor janela do dia implementando o tema da trilha da semana. Notificação fechada.','projeto'),
+  b('10:15','10:25','Micro-descanso','Levantar, andar, água, olhar pra longe. Sem celular.','descanso'),
+  b('10:25','12:00','Demandas do trabalho','','trabalho'),
+  b('12:00','12:40','Almoço','','rotina'),
+  b('12:40','13:10','Faculdade EAD','','estudo'),
+  b('13:10','13:30','Descanso sem tela','Caminhada curta. Pior janela cognitiva do dia.','descanso'),
+  b('13:30','15:00','Demandas do trabalho','','trabalho'),
+  b('15:00','15:10','Micro-descanso','','descanso'),
+  b('15:10','16:20','Trilha','','estudo',null,'trilha'),
+  b('16:20','16:50','LeetCode','','estudo',null,'leet'),
+  b('16:50','17:10','Hábito da semana','','estudo',null,'habito'),
+  b('17:10','17:30','Buffer do trabalho','Sobra do dia e imprevistos. Se não sobrou nada, vira projeto.','trabalho'),
+  b('17:30','18:00','Fechamento do dia','Commit, três linhas do que fazer amanhã e cinco cartões do que estudou hoje.','projeto')
+ ],
+ continuo:[
+  b('09:00','09:15','Triagem do dia','Dia pesado: defina agora o que precisa sair hoje e o que pode esperar. Avisar antes vale mais que entregar tarde.','trabalho'),
+  b('09:15','10:00','Projeto de aprendizado — reduzido','Quarenta e cinco minutos, escopo pequeno. Não comece coisa nova.','projeto'),
+  b('10:00','12:00','Demandas do trabalho','','trabalho'),
+  b('12:00','12:40','Almoço','Coma longe da mesa. Em dia contínuo isso vale mais que meia hora de estudo.','rotina'),
+  b('12:40','13:10','LeetCode','','estudo',null,'leet'),
+  b('13:10','13:25','Descanso sem tela','Quinze minutos. Curto, mas não pule.','descanso'),
+  b('13:25','15:30','Demandas do trabalho','','trabalho'),
+  b('15:30','15:40','Micro-descanso','Obrigatório em dia pesado, não opcional.','descanso'),
+  b('15:40','17:40','Demandas do trabalho','','trabalho'),
+  b('17:40','18:00','Fechamento do dia','Um commit e a nota do que fazer amanhã. Em dia contínuo sobrevivem duas coisas: o LeetCode e isso aqui. A trilha cai hoje e volta amanhã — tudo bem.','projeto')
+ ]
+};
+
+/* ---------- sábado ---------- */
+const expSabado={
+ livre:[
+  b('08:30','08:40','Triagem do dia','','trabalho'),
+  b('08:40','10:10','Projeto de aprendizado','','projeto'),
+  b('10:10','10:20','Micro-descanso','','descanso'),
+  b('10:20','12:00','Leitura longa','Cem minutos no livro da fase, com caneta e marcação. É o bloco que sustenta a trilha da semana seguinte.','estudo'),
+  b('12:00','13:00','Almoço','','rotina'),
+  b('13:00','14:30','Projeto de aprendizado — parte 2','','projeto'),
+  b('14:30','14:40','Micro-descanso','','descanso'),
+  b('14:40','15:10','LeetCode','','estudo',null,'leet'),
+  b('15:10','15:20','Micro-descanso','','descanso'),
+  b('15:20','16:30','Fechar a semana e publicar','Termine o projeto da semana num estado apresentável, escreva o README explicando o que ele prova e publique. Aprendizado que ninguém vê não conta como portfólio.','projeto')
+ ],
+ medio:[
+  b('08:30','08:45','Triagem do dia','','trabalho'),
+  b('08:45','09:45','Projeto de aprendizado','','projeto'),
+  b('09:45','10:00','Micro-descanso','','descanso'),
+  b('10:00','12:00','Demandas do trabalho','','trabalho'),
+  b('12:00','13:00','Almoço','','rotina'),
+  b('13:00','14:15','Leitura longa','Setenta e cinco minutos no livro da fase, com caneta. Sustenta a trilha da semana seguinte.','estudo'),
+  b('14:15','14:30','Micro-descanso','','descanso'),
+  b('14:30','15:30','Demandas do trabalho','','trabalho'),
+  b('15:30','16:00','LeetCode','','estudo',null,'leet'),
+  b('16:00','16:30','Fechar a semana e publicar','README atualizado e um parágrafo publicado sobre o que você entendeu essa semana.','projeto')
+ ],
+ continuo:[
+  b('08:30','08:45','Triagem do dia','','trabalho'),
+  b('08:45','09:30','Projeto de aprendizado — reduzido','','projeto'),
+  b('09:30','12:00','Demandas do trabalho','','trabalho'),
+  b('12:00','13:00','Almoço','','rotina'),
+  b('13:00','13:30','LeetCode','','estudo',null,'leet'),
+  b('13:30','15:50','Demandas do trabalho','','trabalho'),
+  b('15:50','16:00','Micro-descanso','','descanso'),
+  b('16:00','16:30','Leitura e fechar a semana','Meia hora de livro e um push. Mesmo em semana ruim, alguma coisa vai pro ar.','estudo')
+ ]
+};
+
+/* ---------- dias ---------- */
+const DIAS={
+ seg:{nome:'Segunda-feira',curto:'Seg',meta:'Folga do trabalho · Academia de manhã · Vôlei 20:50',demanda:false,
+  nota:'Segunda não tem expediente. Na primeira segunda de cada mês, o bloco das 10:10 vira manutenção: auditoria dos repositórios, arquivar o velho, contribuir com um repositório aberto e limpar um código antigo seu.',
+  blocos:[
+   b('07:00','07:15','Acordar, água, luz da janela','Mobilidade leve. Você treina em quarenta minutos.','rotina'),
+   b('07:15','07:40','Café da manhã','Refeição de verdade — o treino de hoje é o mais longo da semana.','rotina'),
+   b('07:40','08:00','Trajeto até a academia','','rotina'),
+   b('08:00','09:15','Academia','Setenta e cinco minutos, sem pressa de horário.','treino'),
+   b('09:15','09:35','Volta pra casa','','rotina'),
+   b('09:35','10:10','Banho e refeição pós-treino','','rotina'),
+   b('10:10','11:10','Projeto de aprendizado','Uma hora implementando o tema da trilha. Segunda é o dia mais tranquilo pra mexer em coisa nova.','projeto','1ª do mês: manutenção'),
+   b('11:10','11:20','Micro-descanso','','descanso'),
+   b('11:20','12:30','Trilha','','estudo',null,'trilha'),
+   b('12:30','13:30','Almoço e descanso sem tela','','descanso'),
+   b('13:30','14:30','Faculdade EAD','','estudo'),
+   b('14:30','14:40','Micro-descanso','','descanso'),
+   b('14:40','15:10','LeetCode','','estudo',null,'leet'),
+   b('15:10','15:50','Leitura do livro','Quarenta minutos no livro da fase.','estudo'),
+   b('15:50','16:10','Hábito da semana','','estudo',null,'habito'),
+   b('16:10','18:00','Livre','Descanso de verdade. Não encaixe nada — você joga vôlei em quatro horas.','descanso'),
+   b('18:00','19:00','Jantar','','rotina'),
+   b('19:00','20:00','Videogame','Uma hora cheia.','pessoal'),
+   b('20:00','20:40','Livre e preparo do vôlei','','descanso'),
+   b('20:40','20:50','Trajeto até o vôlei','','rotina'),
+   b('20:50','22:00','Vôlei','','treino'),
+   b('22:00','22:40','Banho morno, alongamento, ceia leve','Carboidrato com proteína. Banho morno ajuda a baixar a frequência cardíaca.','rotina'),
+   b('22:40','23:15','Sem tela, luz baixa','','descanso'),
+   b('23:15','07:00','Dormir','Quinze minutos mais tarde de propósito: exercício vigoroso terminando menos de uma hora antes de deitar é o único cenário em que treino noturno atrapalha o sono.','sono')
+  ]},
+ ter:{nome:'Terça-feira',curto:'Ter',meta:'Trabalho 09:00–18:00 · Academia à noite',
+  demanda:true,manha:manhaSemana,exp:k=>expSemana[k],noite:noiteAcademia},
+ qua:{nome:'Quarta-feira',curto:'Qua',meta:'Trabalho 09:00–18:00 · Academia à noite',
+  demanda:true,manha:manhaSemana,exp:k=>expSemana[k],noite:noiteAcademia},
+ qui:{nome:'Quinta-feira',curto:'Qui',meta:'Trabalho 09:00–18:00 · Noite com a namorada',
+  demanda:true,manha:manhaSemana,exp:k=>expSemana[k],
+  noite:[
+   b('18:00','18:05','Saída do trabalho','','rotina'),
+   b('18:05','23:00','Livre — tempo com a namorada','Nada de estudo, nada de projeto, nada de commit. Meia hora apressada antes de um compromisso importante não rende e cria atrito.','pessoal','inegociável'),
+   b('23:00','07:00','Dormir','Se passar um pouco hoje, tudo bem. Não é todo dia.','sono')
+  ]},
+ sex:{nome:'Sexta-feira',curto:'Sex',meta:'Trabalho 09:00–18:00 · Academia à noite',
+  demanda:true,manha:manhaSemana,exp:k=>expSemana[k],noite:noiteAcademia},
+ sab:{nome:'Sábado',curto:'Sáb',meta:'Trabalho 08:30–16:30 · A partir das 18:00 com a namorada',demanda:true,
+  manha:[
+   b('07:00','07:10','Acordar, água, luz da janela','','rotina'),
+   b('07:10','07:40','Café da manhã','','rotina'),
+   b('07:40','08:00','Revisão espaçada','Versão curta de vinte minutos, porque hoje você entra mais cedo.','estudo'),
+   b('08:00','08:20','Banho e se arrumar','','rotina'),
+   b('08:20','08:30','Trajeto até o trabalho','','rotina')
+  ],
+  exp:k=>expSabado[k],
+  noite:[
+   b('16:30','16:35','Saída do trabalho','','rotina'),
+   b('16:35','17:00','Descanso','Deitar, sem tela. Você trabalhou oito horas e ainda tem a noite pela frente.','descanso'),
+   b('17:00','17:45','Banho, lanche e se arrumar','','rotina'),
+   b('17:45','18:00','Ajustes finais','','rotina'),
+   b('18:00','23:30','Livre — tempo com a namorada','Bloco fechado, sem exceção.','pessoal','inegociável'),
+   b('23:30','07:30','Dormir','Horário solto hoje. Domingo você acorda sem alarme.','sono')
+  ]},
+ dom:{nome:'Domingo',curto:'Dom',meta:'Folga do projeto · Consolidação e preparação',demanda:false,
+  nota:'Domingo não tem projeto e não tem trilha. Sim, quebra a sequência. Seis dias por semana com uma folga real sustenta por meses; sete dias não sustenta, e o custo de recomeçar depois do abandono é maior que o de um domingo parado.',
+  blocos:[
+   b('08:00','08:30','Acordar sem alarme, água, café','','rotina'),
+   b('08:30','09:30','Caminhada e alongamento','Descanso ativo, fora de casa de preferência.','treino'),
+   b('09:30','10:30','Café da manhã com calma','','rotina'),
+   b('10:30','12:00','Meal prep da semana','Inclua os lanches pré-treino de terça, quarta e sexta já porcionados. É o que faz o bloco das 18:05 caber em quinze minutos.','rotina'),
+   b('12:00','13:00','Almoço','','rotina'),
+   b('13:00','13:45','Notas da semana viram página pesquisável','Junte as anotações soltas dos cinco blocos de trilha e da leitura num lugar só, organizado e buscável. Anotação que você não acha de novo é anotação que não existe.','estudo'),
+   b('13:45','14:05','LeetCode leve','Um problema fácil, sem cronômetro, só pra não quebrar a corrente. Opcional de verdade: se a semana foi puxada, pule sem culpa.','estudo','opcional'),
+   b('14:05','14:35','Revisão da semana','Quantos blocos profundos aconteceram, quantos problemas você resolveu, como estava a energia às quinze horas. Uma vez por mês, estenda pra uma hora e meia e escreva o roadmap do mês seguinte.','estudo'),
+   b('14:35','18:00','Livre','Videogame, sair, não fazer nada. Sem código.','pessoal'),
+   b('18:00','19:00','Jantar','','rotina'),
+   b('19:00','21:30','Livre','','pessoal'),
+   b('21:30','22:30','Preparar a semana','Roupa de academia separada, mochila pronta e a primeira tarefa de segunda escrita num papel. Segunda de manhã você executa, não decide.','rotina'),
+   b('22:30','23:00','Sem tela','','descanso'),
+   b('23:00','07:00','Dormir','','sono')
+  ]}
+};
+
+const ORDEM=['seg','ter','qua','qui','sex','sab','dom'];
+const NOTAS={
+ livre:'Sem demanda hoje: o expediente inteiro é seu. Trilha em dois blocos, leitura longa, LeetCode, hábito da semana e duas horas e vinte de projeto. É o dia em que a fase avança de verdade.',
+ medio:'Cenário padrão. O trabalho leva cerca de três horas e meia e sobram uma hora de projeto, setenta minutos de trilha, meia hora de LeetCode, vinte de hábito e meia de faculdade. Se o dia virar, o que encolhe primeiro é o hábito da semana — nunca o LeetCode nem o fechamento.',
+ continuo:'Dia pesado. O trabalho come quase seis horas e a trilha cai hoje. Sobrevivem três coisas: os quarenta e cinco minutos de projeto pela manhã, os trinta de LeetCode no almoço e os vinte de fechamento. Perder um dia de trilha é barato; perder a corrente diária é o que faz o plano morrer.'
+};
+
+let diaSel='ter', demSel='medio', faseSel='f1';
+const toMin=t=>{const[h,m]=t.split(':').map(Number);return h*60+m};
+const dur=(s,e)=>{let d=toMin(e)-toMin(s);if(d<0)d+=1440;return d};
+const fmtDur=m=>m>=60?(m%60?Math.floor(m/60)+'h'+String(m%60).padStart(2,'0'):Math.floor(m/60)+'h'):m+'min';
+
+function blocosDe(id){
+  const d=DIAS[id];
+  const raw=d.demanda?[...d.manha,...d.exp(demSel),...d.noite]:d.blocos;
+  const c=TRILHA[faseSel][id], h=HABITO[id];
+  return raw.map(x=>{
+    if(!x.slot) return x;
+    if(x.slot==='leet') return {...x,title:LEET.t,detail:LEET.d};
+    if(x.slot==='habito') return h?{...x,title:h.t,detail:h.d}
+      :{...x,title:'Faculdade adiantada',detail:'Adiante entrega da faculdade e a semana de prova fica muito mais leve.'};
+    if(!c) return {...x,title:'Faculdade adiantada',detail:'Hoje não tem tema de trilha.'};
+    if(x.slot==='trilha') return {...x,title:c.t,detail:c.d};
+    return {...x,title:c.t+' — aplicar',
+      detail:'A primeira parte explicou; essa aqui implementa. Abra o projeto de aprendizado e escreva o código do que você acabou de ler. Conceito que não virou código some em duas semanas.'};
+  });
+}
+
+const hoje=new Date();
+const idHoje=ORDEM[(hoje.getDay()+6)%7];
+document.getElementById('stamp').innerHTML=
+ hoje.toLocaleDateString('pt-BR',{weekday:'long'}).replace(/^./,c=>c.toUpperCase())
+ +'<br><b>'+hoje.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})+'</b>';
+
+const navDays=document.getElementById('days');
+ORDEM.forEach(id=>{
+ const btn=document.createElement('button');
+ btn.type='button'; btn.setAttribute('role','tab'); btn.dataset.id=id;
+ btn.innerHTML=DIAS[id].curto+'<span class="dot"></span>';
+ if(id===idHoje) btn.classList.add('is-today');
+ btn.addEventListener('click',()=>{diaSel=id;render()});
+ navDays.appendChild(btn);
+});
+document.querySelectorAll('#opts .opt').forEach(o=>o.addEventListener('click',()=>{demSel=o.dataset.k;render()}));
+document.querySelectorAll('#phaseOpts .opt').forEach(o=>o.addEventListener('click',()=>{faseSel=o.dataset.p;render()}));
+document.getElementById('legend').innerHTML=Object.values(CAT)
+ .map(c=>'<span><i style="background:'+c.c+'"></i>'+c.n+'</span>').join('');
+
+function render(){
+ const d=DIAS[diaSel];
+ document.querySelectorAll('#days button').forEach(btn=>
+  btn.setAttribute('aria-selected',btn.dataset.id===diaSel?'true':'false'));
+
+ document.getElementById('demand').classList.toggle('is-off',!d.demanda);
+ document.querySelectorAll('#opts .opt').forEach(o=>
+  o.setAttribute('aria-pressed',(d.demanda&&o.dataset.k===demSel)?'true':'false'));
+ document.getElementById('demandNote').textContent=d.demanda?NOTAS[demSel]:d.nota;
+
+ const temTrilha=!!TRILHA[faseSel][diaSel];
+ document.getElementById('phase').classList.toggle('is-off',!temTrilha);
+ document.querySelectorAll('#phaseOpts .opt').forEach(o=>
+  o.setAttribute('aria-pressed',o.dataset.p===faseSel?'true':'false'));
+ document.getElementById('phaseNote').textContent=temTrilha?TRILHA[faseSel].nota
+  :(diaSel==='sab'?'Sábado não tem bloco de trilha: a leitura longa do livro ocupa esse papel e alimenta a semana seguinte.'
+    :'Domingo consolida em vez de aprender: as notas da semana viram uma página pesquisável.');
+
+ const blocos=blocosDe(diaSel);
+ const soma={};
+ blocos.forEach(x=>{if(x.cat!=='sono')soma[x.cat]=(soma[x.cat]||0)+dur(x.start,x.end)});
+ document.getElementById('totals').innerHTML=['projeto','estudo','trabalho','treino','pessoal','descanso']
+  .map(k=>{const v=soma[k]||0;
+   return '<div class="tot'+(v?'':' zero')+'"><div class="k"><i style="background:'+CAT[k].c+'"></i>'
+    +CAT[k].n+'</div><div class="v">'+(v?fmtDur(v):'—')+'</div></div>';}).join('');
+
+ document.getElementById('sheetTitle').textContent=d.nome;
+ document.getElementById('sheetMeta').textContent=d.meta;
+
+ const agoraMin=hoje.getHours()*60+hoje.getMinutes();
+ const ehHoje=diaSel===idHoje;
+ const px=window.innerWidth<600?0.42:0.62;
+
+ document.getElementById('timeline').innerHTML=blocos.map(x=>{
+  const m=dur(x.start,x.end);
+  const alt=Math.max(50,Math.min(180,Math.round(m*px)));
+  const leve=['descanso','rotina'].includes(x.cat);
+  const agora=ehHoje&&x.cat!=='sono'&&toMin(x.start)<=agoraMin&&agoraMin<toMin(x.end);
+  const pills=[];
+  if(agora) pills.push('<span class="pill now">agora</span>');
+  if(x.tag==='opcional') pills.push('<span class="pill opt">opcional</span>');
+  if(x.tag==='inegociável') pills.push('<span class="pill hard">inegociável</span>');
+  if(x.tag&&x.tag.indexOf('mês')>-1) pills.push('<span class="pill mes">'+x.tag+'</span>');
+  return '<div class="row'+(leve?' dim':'')+(agora?' is-now':'')+'" style="min-height:'+alt+'px">'
+   +'<div class="t">'+x.start+'<small>'+x.end+' · '+fmtDur(m)+'</small></div>'
+   +'<div class="bar" style="background:'+CAT[x.cat].c+'"></div>'
+   +'<div class="c"><h3>'+x.title+pills.join('')+'</h3>'
+   +(x.detail?'<p>'+x.detail+'</p>':'')+'</div></div>';
+ }).join('');
+}
+
+diaSel=idHoje; render();
+let t; window.addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(render,150)});
+</script>
+</body>
+</html>

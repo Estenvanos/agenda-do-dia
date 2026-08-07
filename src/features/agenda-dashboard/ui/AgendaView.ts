@@ -2,7 +2,6 @@ import {
   CATEGORY_DEFINITIONS,
   DAYS,
   DAY_ORDER,
-  STUDY_TRACK,
   THEME_BY_DAY,
 } from '../../../entities/agenda/data/agenda.data';
 import type {
@@ -19,7 +18,6 @@ import { logout } from '../../auth/model/auth.service';
 import {
   calculateCategoryTotals,
   getBlocksForDay,
-  getDemandNote,
   getPhaseNote,
 } from '../model/agenda.service';
 import { loadPreferences, savePreferences } from '../model/preferences.service';
@@ -106,7 +104,6 @@ export class AgendaView {
           <div class="choice-list">
             ${this.renderDemandChoices(demandDisabled)}
           </div>
-          <p class="context-note context-note--green">${escapeHtml(getDemandNote(this.preferences))}</p>
         </section>
 
         <section class="choice-card ${phaseDisabled ? 'is-disabled' : ''}" aria-disabled="${phaseDisabled}">
@@ -146,21 +143,6 @@ export class AgendaView {
             ${blocks.map((block, index) => this.renderScheduleBlock(block, index === blocks.length - 1, now, todayId)).join('')}
           </div>
         </section>
-
-        <footer class="agenda-footer">
-          <div class="legend">
-            ${Object.entries(CATEGORY_DEFINITIONS)
-              .map(
-                ([, category]) => `
-                  <span><i style="--category-color:${category.color}"></i>${escapeHtml(category.name)}</span>
-                `,
-              )
-              .join('')}
-          </div>
-          <p><strong>Almoço de sábado:</strong> assumi 12:00–13:00. Se for outro horário, este é o ponto do dia que precisa ser alterado.</p>
-          <p><strong>O bloco profundo da manhã não se negocia.</strong> Mesmo no dia contínuo ele encolhe para uma hora, mas não desaparece.</p>
-          <p><strong>Quinta à noite e sábado a partir das 18:00</strong> não têm tarefas. Não é folga: é compromisso.</p>
-        </footer>
       </main>
     `;
 
@@ -216,9 +198,9 @@ export class AgendaView {
 
   private renderPhaseChoices(disabled: boolean): string {
     const choices: Array<[StudyPhase, string, string]> = [
-      ['f1', 'Fundamentos', 'Semanas 1–8'],
-      ['f2', 'Escala', 'Semanas 9–16'],
-      ['f3', 'Profundidade', 'Semanas 17–24'],
+      ['f1', 'Fundação', 'Sem. 1–8 · redes'],
+      ['f2', 'Operação', 'Sem. 9–16 · devops e cloud'],
+      ['f3', 'Rigor', 'Sem. 17–24 · segurança'],
     ];
     const colors: Record<StudyPhase, string> = {
       f1: 'var(--color-accent)',
@@ -257,6 +239,9 @@ export class AgendaView {
     if (isNow) pills.push('<span class="pill pill--now">agora</span>');
     if (block.tag === 'opcional') pills.push('<span class="pill pill--optional">opcional</span>');
     if (block.tag === 'inegociável') pills.push('<span class="pill pill--protected">inegociável</span>');
+    if (block.tag === '1ª do mês: manutenção') {
+      pills.push('<span class="pill pill--optional">1ª do mês: manutenção</span>');
+    }
 
     return `
       <article

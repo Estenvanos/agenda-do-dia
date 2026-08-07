@@ -1,9 +1,10 @@
 import {
   CATEGORY_DEFINITIONS,
   DAYS,
-  DEMAND_NOTES,
+  LEETCODE,
   STUDY_TRACK,
   THEME_BY_DAY,
+  WEEKLY_HABITS,
 } from '../../../entities/agenda/data/agenda.data';
 import type {
   AgendaPreferences,
@@ -25,54 +26,53 @@ export function getBlocksForDay(preferences: AgendaPreferences): ScheduleBlock[]
     : [...(day.blocks ?? [])];
 
   const theme = THEME_BY_DAY[preferences.selectedDay];
-  if (!theme) {
-    return rawBlocks.map((item) =>
-      item.slot
-        ? {
-            ...item,
-            title: 'Faculdade adiantada ou curso',
-            detail:
-              'Hoje o horário anterior é de carreira, então esse bloco é da faculdade. Adiante entrega agora e a semana de prova fica muito mais leve.',
-          }
-        : item,
-    );
-  }
-
-  const topic = STUDY_TRACK[preferences.studyPhase][theme];
+  const topic = theme ? STUDY_TRACK[preferences.studyPhase][theme] : undefined;
+  const habit = WEEKLY_HABITS[preferences.selectedDay];
   return rawBlocks.map((item) => {
+    if (item.slot === 'leet') {
+      return { ...item, title: LEETCODE.t, detail: LEETCODE.d };
+    }
+    if (item.slot === 'habito') {
+      return habit
+        ? { ...item, title: habit.t, detail: habit.d }
+        : {
+            ...item,
+            title: 'Faculdade adiantada',
+            detail: 'Adiante entrega da faculdade e a semana de prova fica muito mais leve.',
+          };
+    }
+    if (!topic && item.slot) {
+      return {
+        ...item,
+        title: 'Faculdade adiantada',
+        detail: 'Hoje não tem tema de trilha.',
+      };
+    }
     if (item.slot === 'trilha') {
-      return { ...item, title: topic.t, detail: topic.d };
+      return { ...item, title: topic!.t, detail: topic!.d };
     }
     if (item.slot === 'trilha2') {
       return {
         ...item,
-        title: `${topic.t} — segundo bloco`,
+        title: `${topic!.t} — aplicar`,
         detail:
-          'Aplique no código do ResuMax, agora, o que você viu no bloco anterior. Uma hora de leitura que não vira commit evapora em duas semanas. Se a faculdade estiver atrasada, ela ganha esse bloco no lugar.',
+          'A primeira parte explicou; essa aqui implementa. Abra o projeto de aprendizado e escreva o código do que você acabou de ler. Conceito que não virou código some em duas semanas.',
       };
     }
     return item;
   });
 }
 
-export function getDemandNote(preferences: AgendaPreferences): string {
-  const day = DAYS[preferences.selectedDay];
-  return day.hasDemand ? DEMAND_NOTES[preferences.demandLevel] : day.note ?? '';
-}
-
 export function getPhaseNote(dayId: DayId, phase: AgendaPreferences['studyPhase']): string {
   if (THEME_BY_DAY[dayId]) return STUDY_TRACK[phase].note;
-  if (dayId === 'qui') {
-    return 'Quinta não tem bloco de trilha: o horário das 15:10 é de carreira. A trilha volta na sexta.';
-  }
   if (dayId === 'sab') {
-    return 'Sábado não tem bloco de trilha: o expediente inteiro é projeto. A trilha volta na segunda.';
+    return 'Sábado não tem bloco de trilha: a leitura longa do livro ocupa esse papel e alimenta a semana seguinte.';
   }
-  return 'Domingo é folga da trilha e do projeto.';
+  return 'Domingo consolida em vez de aprender: as notas da semana viram uma página pesquisável.';
 }
 
 export function calculateCategoryTotals(blocks: ScheduleBlock[]): CategoryTotal[] {
-  const visibleCategories: CategoryId[] = ['saas', 'estudo', 'trabalho', 'treino', 'pessoal', 'descanso'];
+  const visibleCategories: CategoryId[] = ['projeto', 'estudo', 'trabalho', 'treino', 'pessoal', 'descanso'];
   const totals = new Map<CategoryId, number>();
 
   for (const item of blocks) {
